@@ -8,6 +8,8 @@ seed/**/serviceAccount*.json
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
+/.idea/codeStyles/
+/.kotlin/sessions/
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
@@ -15,3 +17,4 @@ seed/**/serviceAccount*.json
 .externalNativeBuild
 .cxx
 local.properties
+app/google-services.json

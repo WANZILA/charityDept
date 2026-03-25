@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.zionkids"
+    namespace = "com.example.charityDept"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.zionkids"
+        applicationId = "com.example.charityDept"
         minSdk = 24
         targetSdk = 35
         versionCode = 3
