@@ -24,7 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.charityDept.R
 import com.example.charityDept.data.model.Event
 import com.example.charityDept.data.model.EventStatus
-import com.example.charityDept.presentation.components.action.ZionKidAppTopBar
+import com.example.charityDept.presentation.components.action.CharityDeptAppTopBar
 import com.example.charityDept.presentation.screens.widgets.PendingSyncLabel
 import com.example.charityDept.presentation.viewModels.auth.AuthViewModel
 import com.google.firebase.Timestamp
@@ -50,7 +50,7 @@ fun EventDashboardScreen(
 
     Scaffold(
         topBar = {
-            ZionKidAppTopBar(
+            CharityDeptAppTopBar(
                 canNavigateBack = false,
                 txtLabel = stringResource(R.string.events),
             )

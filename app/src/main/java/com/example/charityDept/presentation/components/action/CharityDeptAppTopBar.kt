@@ -37,7 +37,7 @@ import com.example.charityDept.presentation.viewModels.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ZionKidAppTopBar(
+fun CharityDeptAppTopBar(
     canNavigateBack: Boolean,
     modifier: Modifier = Modifier,
     txtLabel: String = "",

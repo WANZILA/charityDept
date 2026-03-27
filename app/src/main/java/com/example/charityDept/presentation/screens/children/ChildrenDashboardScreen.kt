@@ -15,7 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.charityDept.R
 import com.example.charityDept.data.model.ClassGroup
 import com.example.charityDept.data.model.EducationPreference
-import com.example.charityDept.presentation.components.action.ZionKidAppTopBar
+import com.example.charityDept.presentation.components.action.CharityDeptAppTopBar
 import com.example.charityDept.presentation.viewModels.auth.AuthViewModel
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
@@ -31,6 +31,7 @@ fun ChildrenDashboardScreen(
     toChildrenByEducation: (EducationPreference) -> Unit,
     toReunited: () -> Unit,
     toAllRegions: () -> Unit,
+    toNavigateUp: () -> Unit,
     toAllStreets: () -> Unit,
     vm: ChildrenDashboardViewModel = hiltViewModel(),
     authVM: AuthViewModel = hiltViewModel()
@@ -50,9 +51,9 @@ fun ChildrenDashboardScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor   = MaterialTheme.colorScheme.onBackground,
         topBar = {
-            ZionKidAppTopBar(
-                canNavigateBack = false,
-                navigateUp = { /* no-op */ },
+            CharityDeptAppTopBar(
+                canNavigateBack = true,
+                navigateUp = { toNavigateUp() },
                 txtLabel = stringResource(R.string.children),
             )
         },

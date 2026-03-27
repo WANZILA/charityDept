@@ -83,7 +83,7 @@ fun LoginScreen(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth().padding(20.dp)
             ) {
-                Text("ZionKids Login", style = MaterialTheme.typography.headlineSmall)
+                Text("CharityDept Login", style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(24.dp))
 
                 Image(

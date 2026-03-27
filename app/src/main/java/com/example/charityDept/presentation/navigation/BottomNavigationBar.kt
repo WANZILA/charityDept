@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AddTask
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.DoDisturbOff
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Outbox
@@ -55,7 +56,7 @@ fun BottomNavigationBar(
 
     val primary = listOf(
         Screen.HomeDashboard,
-        Screen.ChildrenDashboard,
+        Screen.RegisterDashboard,
         Screen.EventsDashboard
     )
 
@@ -109,7 +110,7 @@ fun BottomNavigationBar(
                         Icon(
                             imageVector = when (screen) {
                                 is Screen.HomeDashboard -> Icons.Filled.Home
-                                is Screen.ChildrenDashboard -> Icons.Filled.Person
+                                is Screen.RegisterDashboard -> Icons.Filled.Book
                                 is Screen.EventsDashboard -> Icons.Filled.AddTask
                                 else -> Icons.Filled.AccountBalance
                             },

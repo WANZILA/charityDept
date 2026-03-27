@@ -16,7 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.charityDept.data.model.AttendanceStatus
 import com.example.charityDept.data.model.Child
 import com.example.charityDept.data.model.Event
-import com.example.charityDept.presentation.components.action.ZionKidAppTopBar
+import com.example.charityDept.presentation.components.action.CharityDeptAppTopBar
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -35,7 +35,7 @@ fun AttendanceDashboardScreen(
 
     Scaffold(
         topBar = {
-            ZionKidAppTopBar(
+            CharityDeptAppTopBar(
                 canNavigateBack = false,
                 txtLabel = ui.selectedEventTitle,
                 dateTxt = ui.selectedEventDateText,

@@ -1,4 +1,13 @@
-package com.example.charityDept.presentation.screens.admin
+package com.example.charityDept.presentation.screens.Register
+
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import com.example.charityDept.presentation.screens.admin.HomeDashboardViewModel
+
 
 import android.content.pm.ApplicationInfo
 import android.widget.Toast
@@ -7,7 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+//import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,13 +35,10 @@ import com.google.firebase.crashlytics.crashlytics
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeDashboardScreen(
-    toChildrenList: () -> Unit,
-    toEventsList: () -> Unit,
-    toAccepted: () -> Unit,
-    toYetAccept: () -> Unit,
-    toResettled: () -> Unit,
-    toBeResettled: () -> Unit,
+fun RegisterDashBoardScreen(
+    toChildrenDashboard: () -> Unit,
+    toFamilyDashboard: () -> Unit,
+
     vm: HomeDashboardViewModel = hiltViewModel(),
 //    authViewModel: AuthViewModel = hiltViewModel()
 ) {
@@ -75,60 +81,17 @@ fun HomeDashboardScreen(
                 // KPI rows
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatCard("Total", ui.childrenTotal.toString(), Modifier.weight(1f), onClick = toChildrenList)
-                        StatCard("New This Month", ui.childrenNewThisMonth.toString(), Modifier.weight(1f))
-                       }
-                }
-
-                item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatCard("Graduated", ui.childrenGraduated.toString(), Modifier.weight(1f))
-//                        StatCard("Sponsored", ui.sponsored.toString(), Modifier.weight(1f))
-                    }
-                }
-                item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatCard("Accepted Christ", ui.acceptedChrist.toString(),  onClick = toAccepted,
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard("Yet to Accept", ui.yetToAcceptChrist.toString(), onClick = toYetAccept,
-                            modifier = Modifier.weight(1f)
-                        )
+                        StatCard("View Children", ui.childrenTotal.toString(), Modifier.weight(1f), onClick = toChildrenDashboard)
+                        StatCard("View Families", "", Modifier.weight(1f), onClick = toFamilyDashboard)
                     }
                 }
 
-                item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                         StatCard("Resettled", ui.resettled.toString(), onClick = toResettled , modifier = Modifier.weight(1f))
-                         StatCard("To Resettle", ui.toBeResettled.toString(),onClick = toBeResettled , modifier =  Modifier.weight(1f))
 
-//                         StatCard("Events Today", ui.eventsToday.toString(), Modifier.weight(1f), onClick = toEventsList)
 
-                    }
-                }
-//                item {
-//                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-//                        StatCard("Active Now", ui.eventsActiveNow.toString(), Modifier.weight(1f))
-//                    }
-//                }
-//item{
-//    CrashlyticsTestScreen()
-//}
 
-                // Happening Today
-                item {
-                    SectionCard("Happening Today") {
-                        if (ui.happeningToday.isEmpty()) {
-                            Text("No events today.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        } else {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                ui.happeningToday.forEach { e ->
-                                    EventRowSmall(e, onOpen = toEventsList)
-                                }
-                            }
-                        }
-                    }
-                }
+
+
+
             }
         }
     }
@@ -233,11 +196,11 @@ fun CrashlyticsTestScreen() {
             Firebase.crashlytics.setCustomKey("screen", "CrashlyticsTestScreen")
 //            Firebase.crashlytics.setCustomKey("build_type", BuildConfig.BUILD_TYPE)
             Firebase.crashlytics.log("About to throw a test RuntimeException")
-                        // Derive build type without BuildConfig
-                        val appInfo = ctx.applicationContext.applicationInfo
-                        val isDebug = (appInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-                        val buildType = if (isDebug) "debug" else "release"
-                        Firebase.crashlytics.setCustomKey("build_type", buildType)
+            // Derive build type without BuildConfig
+            val appInfo = ctx.applicationContext.applicationInfo
+            val isDebug = (appInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+            val buildType = if (isDebug) "debug" else "release"
+            Firebase.crashlytics.setCustomKey("build_type", buildType)
             // FATAL (app will crash)
             throw RuntimeException("🔥 Test crash from CrashlyticsTestScreen")
         }) { Text("Force FATAL crash") }

@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.charityDept.data.model.AssignedRole
-import com.example.charityDept.presentation.components.action.ZionKidAppTopBar
+import com.example.charityDept.presentation.components.action.CharityDeptAppTopBar
 import com.example.charityDept.presentation.viewModels.auth.AuthViewModel
 import com.example.charityDept.presentation.viewModels.users.UsersDashboardViewModel
 
@@ -36,7 +36,7 @@ fun UsersDashboardScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor   = MaterialTheme.colorScheme.onBackground,
         topBar = {
-            ZionKidAppTopBar(
+            CharityDeptAppTopBar(
                 canNavigateBack = false,
                 navigateUp = { /* no-op */ },
             )

@@ -18,6 +18,7 @@ import com.example.charityDept.data.model.AssignedRole
 import com.example.charityDept.data.model.Reply
 import com.example.charityDept.migration.MigrationJsonlAllInOneScreen
 import com.example.charityDept.presentation.screens.*
+import com.example.charityDept.presentation.screens.Register.RegisterDashBoardScreen
 import com.example.charityDept.presentation.screens.admin.AdminDashboardScreen
 import com.example.charityDept.presentation.screens.admin.HomeDashboardScreen
 import com.example.charityDept.presentation.screens.admin.UserDetailScreen
@@ -270,6 +271,28 @@ fun CharityDeptNavHost(
                             }
                         )
                     }
+
+                    /** Register Dashboard */
+                    composable(Screen.RegisterDashboard.route) {
+                        RegisterDashBoardScreen(
+                            toChildrenDashboard = {
+                                navController.navigate(Screen.ChildrenDashboard.route) {
+                                    popUpTo(Screen.RegisterDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            toFamilyDashboard = {
+                                navController.navigate(Screen.RegisterDashboard.route) {
+                                    popUpTo(Screen.RegisterDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+
+
+
+                        )
+                    }
+
 
 
                     /***
@@ -569,7 +592,14 @@ fun CharityDeptNavHost(
                                     popUpTo(Screen.ChildrenDashboard.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
-                            }
+                            },
+                            toNavigateUp = {
+                                navController.navigate(Screen.RegisterDashboard.route) {
+                                    popUpTo(Screen.ChildrenDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+
                         )
                     }
 

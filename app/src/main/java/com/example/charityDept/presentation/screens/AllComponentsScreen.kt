@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.charityDept.presentation.components.action.ZionKidAppTopBar
+import com.example.charityDept.presentation.components.action.CharityDeptAppTopBar
 //import com.example.charityDept.presentation.components.action.ZionKidAppTopBar
 import com.example.charityDept.presentation.theme.CharityDeptTheme
 
@@ -35,7 +35,7 @@ fun AllComponentsScreen(
         containerColor = MaterialTheme.colorScheme.background,
         contentColor   = MaterialTheme.colorScheme.onBackground,
         topBar = {
-            ZionKidAppTopBar(
+            CharityDeptAppTopBar(
                 canNavigateBack = true,
                 navigateUp = { /* no-op */ },
             )
