@@ -75,8 +75,8 @@ fun SplashScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.zion_kids_logo),
-                    contentDescription = "UpLift Logo",
+                    painter = painterResource(id = R.drawable.charity_dept_logo),
+                    contentDescription = "Charity Dept Logo",
                     modifier = Modifier.size(150.dp)
                 )
                 Spacer(modifier = Modifier.height(24.dp))
@@ -88,7 +88,7 @@ fun SplashScreen(
 
             // Tagline at bottom
             Text(
-                text = "Children for Christ Jesus ",
+                text = "Christ Jesus Love ",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier

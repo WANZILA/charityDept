@@ -79,7 +79,7 @@ fun CharityDeptAppTopBar(
                 modifier = Modifier.padding(top = 20.dp, bottom = 20.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.zion_kids_logo),
+                    painter = painterResource(id = R.drawable.charity_dept_logo),
                     contentDescription = stringResource(R.string.company_logo),
                     contentScale = ContentScale.Crop,
                     modifier = Modifier

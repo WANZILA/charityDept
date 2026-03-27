@@ -34,19 +34,17 @@ private fun String?.toEventStatus(): EventStatus =
 //private fun String?.toClassGroup(): ClassGroup =
 //    runCatching { if (this == null) ClassGroup.SERGEANT else ClassGroup.valueOf(this) }
 //        .getOrDefault(ClassGroup.SERGEANT)
+private fun String?.toChildType(): ChildType =
+    runCatching { if (this == null) ChildType.FAMILY else ChildType.valueOf(this) }
+        .getOrDefault(ChildType.FAMILY)
+
+private fun String?.toProgram(): Program =
+    runCatching { if (this == null) Program.CHILDREN_OF_ZION else Program.valueOf(this) }
+        .getOrDefault(Program.CHILDREN_OF_ZION)
+
 private fun String?.toClassGroup(): ClassGroup =
-    runCatching {
-        when (this?.trim()?.uppercase()) {
-            null, "" -> ClassGroup.SERGEANT
-
-            // ✅ Backward-compat aliases (if you ever used these strings before)
-            "GEN" -> ClassGroup.GENERAL
-            "MAJ" -> ClassGroup.MAJOR
-            "CMD" -> ClassGroup.COMMANDER
-
-            else -> ClassGroup.valueOf(this.trim().uppercase())
-        }
-    }.getOrDefault(ClassGroup.SERGEANT)
+    runCatching { if (this == null) ClassGroup.SERGEANT else ClassGroup.valueOf(this) }
+        .getOrDefault(ClassGroup.SERGEANT)
 
 private fun String?.toGender(): Gender =
     runCatching { if (this == null) Gender.MALE else Gender.valueOf(this) }
@@ -125,11 +123,19 @@ fun DocumentSnapshot.toChildOrNull(): Child? {
         gender = (str("gender")).toGender(),
 
         age = intPos("age") ?: 0,
+        ninNumber = str("ninNumber") ?: "",
+        childType = (str("childType")).toChildType(),
+        program = when {
+            (intPos("age") ?: 0) >= 17 -> Program.BROTHERS_AND_SISTERS_OF_ZION
+            else -> (str("program")).toProgram()
+        },
 
         dob = ts("dob"),
         dobVerified = getBoolean("dobVerified") ?: false,
 
         street = str("street") ?: "",
+        personalPhone1 = str("personalPhone1") ?: "",
+        personalPhone2 = str("personalPhone2") ?: "",
 
         invitedBy = (str("invitedBy")).toIndividual(),
         invitedByIndividualId = str("invitedByIndividualId") ?: "",
@@ -252,7 +258,14 @@ fun DocumentSnapshot.toChildOrNull(): Child? {
         whoPrayed = (str("whoPrayed")).toIndividual(),
         whoPrayedOther = str("whoPrayedOther") ?: "",
         whoPrayedId = str("whoPrayedId") ?: "",
-        classGroup = (str("classGroup")).toClassGroup(),
+        classGroup = when (val age = intPos("age") ?: 0) {
+            in 0..5 -> ClassGroup.SERGEANT
+            in 6..9 -> ClassGroup.LIEUTENANT
+            in 10..12 -> ClassGroup.CAPTAIN
+            in 13..16 -> ClassGroup.GENERAL
+            in 17..25 -> ClassGroup.BROTHERS_AND_SISTERS_OF_ZION
+            else -> (str("classGroup")).toClassGroup()
+        },
         outcome = str("outcome") ?: "",
         generalComments = str("generalComments") ?: "",
 
@@ -393,10 +406,16 @@ fun Child.toFirestoreMapPatch(): Map<String, Any> = buildMap {
 
     if (age > 0) put("age", age)
 
+    putIfNotBlank("ninNumber", ninNumber)
+    put("childType", childType.name)
+    put("program", program.name)
+
     putIfNotNull("dob", dob)
     put("dobVerified", dobVerified)
 
     putIfNotBlank("street", street)
+    putIfNotBlank("personalPhone1", personalPhone1)
+    putIfNotBlank("personalPhone2", personalPhone2)
 
     put("invitedBy", invitedBy.name)
     putIfNotBlank("invitedByIndividualId", invitedByIndividualId)

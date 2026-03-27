@@ -1,4 +1,4 @@
-package com.example.charityDept.presentation.screens.streets
+package com.example.charityDept.presentation.screens.admin.streets
 
 
 import android.util.Log

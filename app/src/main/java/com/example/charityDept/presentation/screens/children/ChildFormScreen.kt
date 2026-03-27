@@ -320,28 +320,45 @@ private fun StepBasicInfo(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             Switch(checked = uiState.dobVerified, onCheckedChange = vm::onDobVerified)
         }
 
-        // Street picker field (tappable)
         AppTextField(
-            value = streetDisplay,
-            onValueChange = { /* read-only */ },
-            label = "Street",
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { showStreetDialog = true },
-            leadingIcon = { Icon(Icons.Outlined.PanTool, null) },
-            readOnly = true,
-            enabled = false,
+            value = labelForProgram(uiState.program),
+            onValueChange = { },
+            label = "Program",
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(iconForProgram(uiState.program), null) },
+            readOnly = true
+        )
+        EnumDropdown(
+            title = "Child type",
+            selected = uiState.childType,
+            values = ChildType.values().toList(),
+            onSelected = { vm.ui = vm.ui.copy(childType = it) },
+            labelFor = ::labelForChildType,
+            iconFor = ::iconForChildType
         )
 
-        if (showStreetDialog) {
-            PickerDialog(
-                title = "Select Street",
-                feature = vm.streetPicker,
-                onPicked = { vm.onStreetPicked(it); showStreetDialog = false },
-                onDismiss = { showStreetDialog = false }
+        if (uiState.childType == ChildType.STREET) {
+            AppTextField(
+                value = streetDisplay,
+                onValueChange = { /* read-only */ },
+                label = "Street",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showStreetDialog = true },
+                leadingIcon = { Icon(Icons.Outlined.PanTool, null) },
+                readOnly = true,
+                enabled = false,
             )
-        }
 
+            if (showStreetDialog) {
+                PickerDialog(
+                    title = "Select Street",
+                    feature = vm.streetPicker,
+                    onPicked = { vm.onStreetPicked(it); showStreetDialog = false },
+                    onDismiss = { showStreetDialog = false }
+                )
+            }
+        }
         EnumDropdown(
             title = "Accepted Jesus?",
             selected = uiState.acceptedJesus,
@@ -379,14 +396,16 @@ private fun StepBasicInfo(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             iconFor = ::iconForEducationPreference
         )
 
-        EnumDropdown(
-            title = "Resettlement preference",
-            selected = uiState.resettlementPreference,
-            values = ResettlementPreference.values().toList(),
-            onSelected = { vm.ui = vm.ui.copy(resettlementPreference = it) },
-            labelFor = ::labelForResettlementPreference,
-            iconFor = ::iconForResettlementPreference
-        )
+        if (uiState.childType == ChildType.STREET) {
+            EnumDropdown(
+                title = "Resettlement preference",
+                selected = uiState.resettlementPreference,
+                values = ResettlementPreference.values().toList(),
+                onSelected = { vm.ui = vm.ui.copy(resettlementPreference = it) },
+                labelFor = ::labelForResettlementPreference,
+                iconFor = ::iconForResettlementPreference
+            )
+        }
     }
 }
 
@@ -530,28 +549,32 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
         var showM3Ancestral by rememberSaveable { mutableStateOf(false) }
         var showM3Rental by rememberSaveable { mutableStateOf(false) }
 
-        Text("Resettlement", style = MaterialTheme.typography.titleMedium)
+        if (uiState.childType == ChildType.STREET) {
+            Text("Resettlement", style = MaterialTheme.typography.titleMedium)
 
-        AppDateField(
-            label = "Leave street date",
-            value = uiState.leaveStreetDate,
-            onChanged = { vm.ui = vm.ui.copy(leaveStreetDate = it) },
-            leadingIcon = { Icon(Icons.Outlined.CalendarMonth, null) }
-        )
+            AppDateField(
+                label = "Leave street date",
+                value = uiState.leaveStreetDate,
+                onChanged = { vm.ui = vm.ui.copy(leaveStreetDate = it) },
+                leadingIcon = { Icon(Icons.Outlined.CalendarMonth, null) }
+            )
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Resettled")
-            Spacer(Modifier.width(12.dp))
-            Switch(checked = uiState.resettled, onCheckedChange = { vm.ui = vm.ui.copy(resettled = it) })
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Resettled")
+                Spacer(Modifier.width(12.dp))
+                Switch(
+                    checked = uiState.resettled,
+                    onCheckedChange = { vm.ui = vm.ui.copy(resettled = it) }
+                )
+            }
+
+            AppDateField(
+                label = "Resettlement date",
+                value = uiState.resettlementDate,
+                onChanged = { vm.ui = vm.ui.copy(resettlementDate = it) },
+                leadingIcon = { Icon(Icons.Outlined.CalendarMonth, null) }
+            )
         }
-
-        AppDateField(
-            label = "Resettlement date",
-            value = uiState.resettlementDate,
-            onChanged = { vm.ui = vm.ui.copy(resettlementDate = it) },
-            leadingIcon = { Icon(Icons.Outlined.CalendarMonth, null) }
-        )
-
 //        EnumDropdown(
 //            title = "Country",
 //            selected = uiState.country,
@@ -588,6 +611,29 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
 //        }
 
 //        Divider(Modifier.padding(vertical = 8.dp))
+        if (uiState.program == Program.BROTHERS_AND_SISTERS_OF_ZION) {
+            AppTextField(
+                value = uiState.ninNumber,
+                onValueChange = { vm.ui = vm.ui.copy(ninNumber = it) },
+                label = "NIN Number",
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Characters,
+                    imeAction = ImeAction.Next
+                ),
+                leadingIcon = { Icon(Icons.Outlined.Badge, null) }
+            )
+
+            Divider(Modifier.padding(vertical = 4.dp))
+            Text("Child personal contacts", style = MaterialTheme.typography.titleMedium)
+
+            PhoneRow(
+                a = uiState.personalPhone1,
+                b = uiState.personalPhone2,
+                onA = { vm.ui = vm.ui.copy(personalPhone1 = it.filter { ch -> ch.isDigit() }) },
+                onB = { vm.ui = vm.ui.copy(personalPhone2 = it.filter { ch -> ch.isDigit() }) }
+            )
+        }
         Text("Primary contact", style = MaterialTheme.typography.titleMedium)
 
         NameRow(
@@ -1454,26 +1500,6 @@ private fun labelForReply(v: Reply): String = when (v) {
     Reply.NO -> "No"
 }
 
-private fun labelForClassGroup(v: ClassGroup): String = when (v) {
-    ClassGroup.SERGEANT -> "Sergeant: 0-5"
-    ClassGroup.LIEUTENANT -> "Lieutenant: 6-9"
-    ClassGroup.CAPTAIN -> "Captain: 10-12"
-    ClassGroup.GENERAL -> "General: 13-18"
-    ClassGroup.MAJOR -> "Major: 19-21"
-    ClassGroup.COMMANDER -> "Commander: 22-25"
-}
-
-
-private fun iconForClassGroup(v: ClassGroup): ImageVector = when (v) {
-    ClassGroup.SERGEANT -> Icons.Outlined.SpatialAudioOff
-    ClassGroup.LIEUTENANT -> Icons.Outlined.Mood
-    ClassGroup.CAPTAIN -> Icons.Outlined.Badge
-    ClassGroup.GENERAL -> Icons.Outlined.ShutterSpeed
-    ClassGroup.MAJOR -> Icons.Outlined.MilitaryTech
-    ClassGroup.COMMANDER -> Icons.Outlined.Star
-}
-
-
 private fun labelForGender(v: Gender): String = when (v) {
     Gender.MALE -> "Male"
     Gender.FEMALE -> "Female"
@@ -1531,6 +1557,46 @@ private fun labelForCountry(v: Country): String = when (v) {
     Country.RWANDA -> "Rwanda"
     Country.SUDAN -> "Sudan"
     Country.BURUNDI -> "Burundi"
+}
+
+private fun labelForChildType(v: ChildType): String = when (v) {
+    ChildType.STREET -> "Street"
+    ChildType.INMATES -> "Inmates"
+    ChildType.FAMILY -> "Family"
+    ChildType.HOSPITAL -> "Hospital"
+}
+
+private fun iconForChildType(v: ChildType): ImageVector = when (v) {
+    ChildType.STREET -> Icons.Outlined.DirectionsWalk
+    ChildType.INMATES -> Icons.Outlined.Groups
+    ChildType.FAMILY -> Icons.Outlined.Home
+    ChildType.HOSPITAL -> Icons.Outlined.LocalHospital
+}
+
+private fun labelForProgram(v: Program): String = when (v) {
+    Program.CHILDREN_OF_ZION -> "Children of Zion"
+    Program.BROTHERS_AND_SISTERS_OF_ZION -> "Brothers and Sisters of Zion"
+}
+
+private fun iconForProgram(v: Program): ImageVector = when (v) {
+    Program.CHILDREN_OF_ZION -> Icons.Outlined.ChildCare
+    Program.BROTHERS_AND_SISTERS_OF_ZION -> Icons.Outlined.Groups
+}
+
+private fun labelForClassGroup(v: ClassGroup): String = when (v) {
+    ClassGroup.SERGEANT -> "Sergeant: 0-5"
+    ClassGroup.LIEUTENANT -> "Lieutenant: 6-9"
+    ClassGroup.CAPTAIN -> "Captain: 10-12"
+    ClassGroup.GENERAL -> "13-16"
+    ClassGroup.BROTHERS_AND_SISTERS_OF_ZION -> "Brothers and Sisters of Zion"
+}
+
+private fun iconForClassGroup(v: ClassGroup): ImageVector = when (v) {
+    ClassGroup.SERGEANT -> Icons.Outlined.SpatialAudioOff
+    ClassGroup.LIEUTENANT -> Icons.Outlined.Mood
+    ClassGroup.CAPTAIN -> Icons.Outlined.Badge
+    ClassGroup.GENERAL -> Icons.Outlined.ShutterSpeed
+    ClassGroup.BROTHERS_AND_SISTERS_OF_ZION -> Icons.Outlined.Groups
 }
 
 @Composable

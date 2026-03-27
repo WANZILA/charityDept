@@ -48,12 +48,19 @@ data class Child(
     val oName: String = "",
 
     val age: Int = 0,
+    val ninNumber: String = "",
+    val childType: ChildType = ChildType.FAMILY,
+    val program: Program = Program.CHILDREN_OF_ZION,
 
     val dob: Timestamp? = null,
     val dobVerified: Boolean = false,
     val gender: Gender = Gender.MALE,
 
     val street: String = "",
+    val personalPhone1: String = "",
+    val personalPhone2: String = "",
+
+
 
     val invitedBy: Individual = Individual.UNCLE,
     val invitedByIndividualId: String = "",
@@ -215,7 +222,7 @@ data class Child(
         listOf(fName, oName, lName).map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ")
 
     fun hasPhone(): Boolean =
-        listOf(telephone1a, telephone1b, telephone2a, telephone2b, telephone3a, telephone3b)
+        listOf(personalPhone1, personalPhone2, telephone1a, telephone1b, telephone2a, telephone2b, telephone3a, telephone3b)
             .any { it.trim().isNotEmpty() }
 
     fun addressLine(): String =
@@ -239,13 +246,25 @@ enum class ResettlementPreference { DIRECT_HOME, TEMPORARY_HOME, OTHER }
 enum class Reply { YES, NO }
 enum class Relationship { NONE, PARENT, UNCLE, AUNTY, OTHER }
 
+
+enum class ChildType {
+    STREET,
+    INMATES,
+    FAMILY,
+    HOSPITAL
+}
+
+enum class Program {
+    CHILDREN_OF_ZION,
+    BROTHERS_AND_SISTERS_OF_ZION
+}
+
 enum class ClassGroup {
     SERGEANT,
     LIEUTENANT,
     CAPTAIN,
     GENERAL,
-    MAJOR,
-    COMMANDER,
+    BROTHERS_AND_SISTERS_OF_ZION,
 }
 
 enum class Gender { MALE, FEMALE }

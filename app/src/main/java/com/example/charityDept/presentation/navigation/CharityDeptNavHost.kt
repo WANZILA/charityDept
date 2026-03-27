@@ -35,7 +35,7 @@ import com.example.charityDept.presentation.screens.children.childDashboard.Chil
 import com.example.charityDept.presentation.screens.events.*
 import com.example.charityDept.presentation.screens.reports.ReportScreen
 import com.example.charityDept.presentation.screens.splash.SplashScreen
-import com.example.charityDept.presentation.screens.streets.StreetsScreen
+import com.example.charityDept.presentation.screens.admin.streets.StreetsScreen
 import com.example.charityDept.presentation.screens.technicalSkills.TechnicalSkillsScreen
 import com.example.charityDept.presentation.screens.users.UsersDashboardScreen
 import com.example.charityDept.presentation.viewModels.auth.AuthViewModel
@@ -326,6 +326,19 @@ fun CharityDeptNavHost(
                                 toReportsDashboard = {
 
                                 },
+                                toStreetsDashboard = {
+                                    navController.navigate(Screen.StreetsDashboard.route) {
+                                        popUpTo(Screen.AdminDashboard.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                toTechnicalSkillsDashboard = {
+                                    navController.navigate(Screen.TechnicalSkillsDashboard.route) {
+                                        popUpTo(Screen.AdminDashboard.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
+
                                 navigateUp = {}
                             )
                         } else {

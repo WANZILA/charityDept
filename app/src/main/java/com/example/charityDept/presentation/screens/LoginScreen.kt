@@ -87,7 +87,7 @@ fun LoginScreen(
                 Spacer(Modifier.height(24.dp))
 
                 Image(
-                    painter = painterResource(id = R.drawable.zion_kids_logo),
+                    painter = painterResource(id = R.drawable.charity_dept_logo),
                     contentDescription = "Charity Dept Logo",
                     modifier = Modifier.size(120.dp)
                 )

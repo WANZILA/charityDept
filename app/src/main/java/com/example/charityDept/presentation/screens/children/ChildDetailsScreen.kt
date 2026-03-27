@@ -150,6 +150,14 @@ private fun DetailsContent(child: Child) {
                 Field("Other name", child.oName.ifBlank { "-" })
                 Field("Age", child.age.takeIf { it > 0 }?.toString() ?: "-")
                 Field("Street", child.street.ifBlank { "-" })
+
+                Field("NIN Number", child.ninNumber.ifBlank { "-" })
+                Field("Child type", child.childType.name)
+                Field("Program", child.program.name)
+                Field("Child phone 1", child.personalPhone1.ifBlank { "-" })
+                Field("Child phone 2", child.personalPhone2.ifBlank { "-" })
+
+                Field("Class group", child.classGroup.name)
                 Field("Invited by", child.invitedBy.name)
                 Field("Invited by (ID)", child.invitedByIndividualId.ifBlank { "-" })
                 Field("Invited by (Other)", child.invitedByTypeOther.ifBlank { "-" })

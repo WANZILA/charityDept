@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.withTransaction
 import com.example.charityDept.data.local.db.AppDatabase
 import com.example.charityDept.data.model.Child
+import com.example.charityDept.data.model.ChildType
 import com.example.charityDept.data.model.ClassGroup
 import com.example.charityDept.data.model.ConfessedBy
 import com.example.charityDept.data.model.Country
@@ -11,6 +12,7 @@ import com.example.charityDept.data.model.EducationLevel
 import com.example.charityDept.data.model.EducationPreference
 import com.example.charityDept.data.model.Gender
 import com.example.charityDept.data.model.Individual
+import com.example.charityDept.data.model.Program
 import com.example.charityDept.data.model.RegistrationStatus
 import com.example.charityDept.data.model.Relationship
 import com.example.charityDept.data.model.Reply
@@ -66,6 +68,21 @@ object ChildrenSeedLoader {
 
     private fun JSONObject.toChildSeeded(): Child {
         val childId = optString("childId", "")
+        val childType = optEnum("childType", ChildType.FAMILY) { ChildType.valueOf(it) }
+
+        val age = optInt("age", 0)
+        val program = when {
+            age >= 17 -> Program.BROTHERS_AND_SISTERS_OF_ZION
+            else -> optEnum("program", Program.CHILDREN_OF_ZION) { Program.valueOf(it) }
+        }
+        val classGroup = when (age) {
+            in 0..5 -> ClassGroup.SERGEANT
+            in 6..9 -> ClassGroup.LIEUTENANT
+            in 10..12 -> ClassGroup.CAPTAIN
+            in 13..16 -> ClassGroup.GENERAL
+            in 17..25 -> ClassGroup.BROTHERS_AND_SISTERS_OF_ZION
+            else -> optEnum("classGroup", ClassGroup.SERGEANT) { ClassGroup.valueOf(it) }
+        }
 
         // timestamps (nullable ones handled as null)
         val dobMs: Long? = if (isNull("dob")) null else optLong("dob", 0L)
@@ -116,7 +133,6 @@ object ChildrenSeedLoader {
         val acceptedJesus = optEnum("acceptedJesus", Reply.NO) { Reply.valueOf(it) }
         val confessedBy = optEnum("confessedBy", ConfessedBy.NONE) { ConfessedBy.valueOf(it) }
         val whoPrayed = optEnum("whoPrayed", Individual.UNCLE) { Individual.valueOf(it) }
-        val classGroup = optEnum("classGroup", ClassGroup.SERGEANT) { ClassGroup.valueOf(it) }
 
         val registrationStatus = optEnum("registrationStatus", RegistrationStatus.BASICINFOR) {
             RegistrationStatus.valueOf(it)
@@ -133,13 +149,18 @@ object ChildrenSeedLoader {
             lName = optString("lName", ""),
             oName = optString("oName", ""),
 
-            age = optInt("age", 0),
+            age = age,
+            ninNumber = optString("ninNumber", ""),
+            childType = childType,
+            program = program,
 
             dob = dobTs,
             dobVerified = optInt("dobVerified", 0) == 1 || optBoolean("dobVerified", false),
             gender = gender,
 
             street = optString("street", ""),
+            personalPhone1 = optString("personalPhone1", ""),
+            personalPhone2 = optString("personalPhone2", ""),
 
             invitedBy = invitedBy,
             invitedByIndividualId = optString("invitedByIndividualId", ""),

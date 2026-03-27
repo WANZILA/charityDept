@@ -469,7 +469,8 @@ class ChildFormViewModel @Inject constructor(
             newUi = newUi.copy(
                 dob = inferredDob,
                 dobVerified = false,
-                classGroup = classGroupForAge(age) // ✅ auto update
+                program = programForAge(age),
+                classGroup = classGroupForAge(age)
             )
         }
 
@@ -482,11 +483,33 @@ class ChildFormViewModel @Inject constructor(
             val age = yearsBetweenDobAndToday(dob)
             newUi = newUi.copy(
                 ageText = age.toString(),
-                classGroup = classGroupForAge(age) // ✅ auto update
+                program = programForAge(age),
+                classGroup = classGroupForAge(age)
             )
         }
         ui = newUi
     }
+
+    private fun programForAge(age: Int): Program {
+        return when {
+            age >= 17 -> Program.BROTHERS_AND_SISTERS_OF_ZION
+            age >= 0 -> Program.CHILDREN_OF_ZION
+            else -> ui.program
+        }
+    }
+
+    private fun classGroupForAge(age: Int): ClassGroup {
+        return when (age) {
+            in 0..5 -> ClassGroup.SERGEANT
+            in 6..9 -> ClassGroup.LIEUTENANT
+            in 10..12 -> ClassGroup.CAPTAIN
+            in 13..16 -> ClassGroup.GENERAL
+            in 17..MAX_AGE -> ClassGroup.BROTHERS_AND_SISTERS_OF_ZION
+            else -> ui.classGroup
+        }
+    }
+
+
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -495,7 +518,7 @@ class ChildFormViewModel @Inject constructor(
             RegistrationStatus.BASICINFOR -> {
                 val fRes = FormValidatorUtil.validateName(ui.fName)
                 val lRes = FormValidatorUtil.validateName(ui.lName)
-                val streetRes = FormValidatorUtil.validateName(ui.street)
+//                val streetRes = FormValidatorUtil.validateName(ui.street)
                 val ageRes = FormValidatorUtil.validateAgeString(
                     ui.ageText.orEmpty(),
                     minAge = 0,
@@ -505,13 +528,13 @@ class ChildFormViewModel @Inject constructor(
                 ui = ui.copy(
                     fName = fRes.value, fNameError = fRes.error,
                     lName = lRes.value, lNameError = lRes.error,
-                    street = streetRes.value, streetError = streetRes.error,
+//                    street = streetRes.value, streetError = streetRes.error,
                     ageText = ageRes.value.first.toString(),
                     ageError = ageRes.error,
                     error = null
                 )
 
-                val ok = fRes.isValid && lRes.isValid && streetRes.isValid && ageRes.isValid
+                val ok = fRes.isValid && lRes.isValid  && ageRes.isValid
                 if (!ok) {
                     ui = ui.copy(error = "Please fix the highlighted fields.")
                     _events.trySend(ChildFormEvent.Error("Missing or invalid fields"))
@@ -566,20 +589,11 @@ class ChildFormViewModel @Inject constructor(
 
     // inside ChildFormViewModel (same file)
 
-    private fun classGroupForAge(age: Int): ClassGroup {
-        return when (age) {
-            in 0..5 -> ClassGroup.SERGEANT
-            in 6..9 -> ClassGroup.LIEUTENANT
-            in 10..12 -> ClassGroup.CAPTAIN
-            in 13..18 -> ClassGroup.GENERAL
-            in 19..21 -> ClassGroup.MAJOR
-            in 22..MAX_AGE -> ClassGroup.COMMANDER   // <-- for 19–25
-            else -> ui.classGroup // keep whatever is selected if age is <3 or invalid
-        }
-    }
 
-    private fun buildChild(id: String, now: Timestamp, status: RegistrationStatus): Child =
-        Child(
+    private fun buildChild(id: String, now: Timestamp, status: RegistrationStatus): Child {
+        val derivedAge = ui.ageText.toIntOrNull() ?: 0
+
+       return   Child(
             childId = id,
 
             profileImg = ui.profileImg,
@@ -587,10 +601,19 @@ class ChildFormViewModel @Inject constructor(
             lName = ui.lName.trim(),
             oName = ui.oName.trim(),
             gender = ui.gender,
-            age = ui.ageText.toIntOrNull() ?: 0,
+//            age = ui.ageText.toIntOrNull() ?: 0,
+
+            age = derivedAge,
+            ninNumber = ui.ninNumber.trim(),
+            childType = ui.childType,
+            program = programForAge(derivedAge),
             dob = ui.dob,
             dobVerified = ui.dobVerified,
+
             street = ui.street,
+            personalPhone1 = ui.personalPhone1,
+            personalPhone2 = ui.personalPhone2,
+
             invitedBy = ui.invitedBy,
             invitedByIndividualId = ui.invitedByIndividualId,
             invitedByTypeOther = ui.invitedByTypeOther,
@@ -693,7 +716,7 @@ class ChildFormViewModel @Inject constructor(
             whoPrayed = ui.whoPrayed,
             whoPrayedOther = ui.whoPrayedOther,
             whoPrayedId = ui.whoPrayedId,
-            classGroup = ui.classGroup,
+            classGroup = classGroupForAge(derivedAge),
             outcome = ui.outcome,
             generalComments = ui.generalComments,
 
@@ -711,6 +734,7 @@ class ChildFormViewModel @Inject constructor(
             createdAt = ui.createdAt ?: now,
             updatedAt = now
         )
+    }
 
     private fun ChildFormUiState.from(c: Child) = copy(
         childId = c.childId,
@@ -720,9 +744,16 @@ class ChildFormViewModel @Inject constructor(
         oName = c.oName,
         gender = c.gender,
         ageText = c.age.toString(),
+        ninNumber = c.ninNumber,
+        childType = c.childType,
+        program = if (c.age >= 0) programForAge(c.age) else c.program,
         dob = c.dob,
+//        ageText = c.age.toString(),
+//        dob = c.dob,
         dobVerified = c.dobVerified,
         street = c.street,
+        personalPhone1 = c.personalPhone1,
+        personalPhone2 = c.personalPhone2,
         invitedBy = c.invitedBy,
         invitedByIndividualId = c.invitedByIndividualId,
         invitedByTypeOther = c.invitedByTypeOther,
@@ -862,11 +893,16 @@ data class ChildFormUiState(
 
     val ageText: String = "",
     val gender: Gender = Gender.MALE,
+    val ninNumber: String = "",
+    val childType: ChildType = ChildType.FAMILY,
+    val program: Program = Program.CHILDREN_OF_ZION,
 
     val dob: Timestamp? = null,
     val dobVerified: Boolean = false,
 
     val street: String = "",
+    val personalPhone1: String = "",
+    val personalPhone2: String = "",
 
     val invitedBy: Individual = Individual.UNCLE,
     val invitedByIndividualId: String = "",

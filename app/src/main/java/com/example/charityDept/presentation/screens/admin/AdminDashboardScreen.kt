@@ -41,6 +41,8 @@ fun AdminDashboardScreen(
     toEventsDashboard: () -> Unit,
     toAttendanceDashboard: () -> Unit,
     toReportsDashboard: () -> Unit,
+    toStreetsDashboard:() -> Unit,
+    toTechnicalSkillsDashboard:() ->Unit,
     vm: AdminDashboardViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
     canNavigateBack: Boolean = false,
@@ -175,6 +177,24 @@ fun AdminDashboardScreen(
                             )
                         }
 
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ZionDashboardCard(
+                                title = "🏠 Streets",
+                                value = "",
+                                modifier = Modifier.weight(1f),
+                                onClick = {  toStreetsDashboard() }
+                            )
+
+                            ZionDashboardCard(
+                                title = "🗑 Skills",
+                                value = "",
+                                modifier = Modifier.weight(1f),
+                                onClick = { toTechnicalSkillsDashboard() }
+                            )
+                        }
                         // --- Row 5 (Sync health) ---
                         Row(
                             Modifier.fillMaxWidth(),

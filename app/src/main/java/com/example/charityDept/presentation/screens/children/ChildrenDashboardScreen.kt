@@ -317,20 +317,36 @@ private fun ClassGroupRow(
     count: Int,
     total: Int
 ) {
-    val pct = ((count * 100f) / total.toFloat()).coerceIn(0f, 100f)
+    val pct = if (total > 0) {
+        ((count * 100f) / total.toFloat()).coerceIn(0f, 100f)
+    } else {
+        0f
+    }
 
     ElevatedCard {
         Column(Modifier.padding(12.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(label, style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    "Count: $count (${String.format("%.0f", pct)}%)",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Spacer(Modifier.height(6.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = "Count: $count (${String.format("%.0f", pct)}%)",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            Spacer(Modifier.height(8.dp))
+
             LinearProgressIndicator(
-                progress = (count / total.toFloat()).coerceIn(0f, 1f),
+                progress = if (total > 0) {
+                    (count / total.toFloat()).coerceIn(0f, 1f)
+                } else {
+                    0f
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp)
@@ -338,14 +354,12 @@ private fun ClassGroupRow(
         }
     }
 }
-
 private fun labelForClassGroupDashboard(v: ClassGroup): String = when (v) {
     ClassGroup.SERGEANT -> "Sergeant (0–5)"
     ClassGroup.LIEUTENANT -> "Lieutenant (6–9)"
     ClassGroup.CAPTAIN -> "Captain (10–12)"
-    ClassGroup.GENERAL -> "General (13–18)"
-    ClassGroup.MAJOR -> "Major (19–21)"
-    ClassGroup.COMMANDER -> "Commander (22–25)"
+    ClassGroup.GENERAL -> "General (13–16)"
+    ClassGroup.BROTHERS_AND_SISTERS_OF_ZION -> "Brothers and Sisters of Zion (17+)"
 }
 
 //package com.example.charityDept.presentation.screens.children

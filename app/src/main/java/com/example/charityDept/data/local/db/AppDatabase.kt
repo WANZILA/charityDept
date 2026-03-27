@@ -46,7 +46,7 @@ import com.example.charityDept.data.model.UgVillageEntity
         AssessmentAnswer::class,
         AssessmentTaxonomy::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(TimestampConverters::class)
@@ -512,6 +512,40 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_children_createdAt ON children(createdAt)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_children_updatedAt ON children(updatedAt)")
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_children_isDirty ON children(isDirty)")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE children ADD COLUMN ninNumber TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE children ADD COLUMN childType TEXT NOT NULL DEFAULT 'FAMILY'")
+                db.execSQL("ALTER TABLE children ADD COLUMN program TEXT NOT NULL DEFAULT 'CHILDREN_OF_ZION'")
+                db.execSQL("ALTER TABLE children ADD COLUMN personalPhone1 TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE children ADD COLUMN personalPhone2 TEXT NOT NULL DEFAULT ''")
+
+                db.execSQL(
+                    """
+            UPDATE children
+            SET program = CASE
+                WHEN age >= 17 THEN 'BROTHERS_AND_SISTERS_OF_ZION'
+                ELSE 'CHILDREN_OF_ZION'
+            END
+            """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+            UPDATE children
+            SET classGroup = CASE
+                WHEN age BETWEEN 0 AND 5 THEN 'SERGEANT'
+                WHEN age BETWEEN 6 AND 9 THEN 'LIEUTENANT'
+                WHEN age BETWEEN 10 AND 12 THEN 'CAPTAIN'
+                WHEN age BETWEEN 13 AND 16 THEN 'THIRTEEN_TO_SIXTEEN'
+                WHEN age >= 17 THEN 'BROTHERS_AND_SISTERS_OF_ZION'
+                ELSE classGroup
+            END
+            """.trimIndent()
+                )
             }
         }
     }
