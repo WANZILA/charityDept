@@ -11,6 +11,7 @@ import com.example.charityDept.data.local.dao.AssessmentTaxonomyDao
 import com.example.charityDept.data.local.dao.AttendanceDao
 import com.example.charityDept.data.local.dao.ChildDao
 import com.example.charityDept.data.local.dao.EventDao
+import com.example.charityDept.data.local.dao.FamilyDao
 import com.example.charityDept.data.local.dao.KpiDao
 import com.example.charityDept.data.local.dao.UgAdminDao
 import com.example.charityDept.data.local.db.AppDatabase
@@ -92,7 +93,8 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_3_4,
                 AppDatabase.MIGRATION_4_5,
                 AppDatabase.MIGRATION_5_6,
-                AppDatabase.MIGRATION_6_7
+                AppDatabase.MIGRATION_6_7,
+                AppDatabase.MIGRATION_7_8
             )
 
 // /// CHANGED: keep debug view
@@ -144,6 +146,11 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideEventDao(db: AppDatabase): EventDao = db.eventDao()
+
+    @Provides
+    @Singleton
+    fun provideFamilyDao(db: AppDatabase): FamilyDao = db.familyDao()
+
 
     @Provides
     @Singleton

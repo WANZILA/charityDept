@@ -36,6 +36,9 @@ import com.example.charityDept.presentation.screens.events.*
 import com.example.charityDept.presentation.screens.reports.ReportScreen
 import com.example.charityDept.presentation.screens.splash.SplashScreen
 import com.example.charityDept.presentation.screens.admin.streets.StreetsScreen
+import com.example.charityDept.presentation.screens.families.FamilyDetailsScreen
+import com.example.charityDept.presentation.screens.families.FamilyFormScreen
+import com.example.charityDept.presentation.screens.families.FamilyListScreen
 import com.example.charityDept.presentation.screens.technicalSkills.TechnicalSkillsScreen
 import com.example.charityDept.presentation.screens.users.UsersDashboardScreen
 import com.example.charityDept.presentation.viewModels.auth.AuthViewModel
@@ -282,7 +285,7 @@ fun CharityDeptNavHost(
                                 }
                             },
                             toFamilyDashboard = {
-                                navController.navigate(Screen.RegisterDashboard.route) {
+                                navController.navigate(Screen.FamiliesList.route) {
                                     popUpTo(Screen.RegisterDashboard.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
@@ -293,6 +296,73 @@ fun CharityDeptNavHost(
                         )
                     }
 
+                    composable(Screen.FamiliesList.route) {
+                        FamilyListScreen(
+                            navigateUp = { navController.navigateUp() },
+                            onAddFamily = {
+                                navController.navigate(Screen.FamilyForm.newFamily()) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onFamilyClick = { familyId ->
+                                navController.navigate(Screen.FamilyDetails.createRoute(familyId)) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = Screen.FamilyDetails.route,
+                        arguments = listOf(
+                            navArgument("familyId") { type = NavType.StringType }
+                        )
+                    ) { backStackEntry ->
+                        val familyIdArg = backStackEntry.arguments?.getString("familyId").orEmpty()
+                        FamilyDetailsScreen(
+                            familyIdArg = familyIdArg,
+                            onEdit = { familyId ->
+                                navController.navigate(Screen.FamilyForm.edit(familyId)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            toFamilyList = {
+                                navController.navigate(Screen.FamiliesList.route) {
+                                    popUpTo(Screen.FamiliesList.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onAddMember = { familyIdArg ->
+                                navController.navigate(Screen.FamilyMemberForm.newMember(familyIdArg)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            navigateUp = { navController.navigateUp() }
+                        )
+                    }
+
+                    composable(
+                        route = Screen.FamilyForm.route,
+                        arguments = listOf(
+                            navArgument("familyId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
+                    ) { backStackEntry ->
+                        val familyIdArg = backStackEntry.arguments?.getString("familyId")
+                        FamilyFormScreen(
+                            familyIdArg = familyIdArg,
+                            onFinished = { savedId ->
+                                navController.navigate(Screen.FamiliesList.route) {
+                                    popUpTo(Screen.FamiliesList.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            navigateUp = { navController.navigateUp() }
+                        )
+                    }
 
 
                     /***

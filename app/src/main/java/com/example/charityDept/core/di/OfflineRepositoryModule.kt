@@ -11,6 +11,8 @@ import com.example.charityDept.domain.repositories.offline.OfflineChildrenReposi
 import com.example.charityDept.domain.repositories.offline.OfflineChildrenRepositoryImpl
 import com.example.charityDept.domain.repositories.offline.OfflineEventsRepository
 import com.example.charityDept.domain.repositories.offline.OfflineEventsRepositoryImpl
+import com.example.charityDept.domain.repositories.offline.OfflineFamiliesRepository
+import com.example.charityDept.domain.repositories.offline.OfflineFamiliesRepositoryImpl
 import com.example.charityDept.domain.repositories.offline.OfflineUgAdminRepository
 //import com.example.charityDept.domain.repositories.offline.OfflineUgAdminRepositoryImpl
 
@@ -57,6 +59,12 @@ abstract class OfflineRepositoryModule {
     abstract fun bindOfflineAssessmentRepository(
         impl: OfflineAssessmentRepositoryImpl
     ): OfflineAssessmentRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindOfflineFamiliesRepository(
+        impl: OfflineFamiliesRepositoryImpl
+    ): OfflineFamiliesRepository
 
 //    @Binds
 //    @Singleton

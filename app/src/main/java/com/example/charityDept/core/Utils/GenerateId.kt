@@ -11,6 +11,8 @@ object GenerateId {
             "event" -> "ev"
             "attendance" ->"att"
             "street" ->"stre"
+            "family" ->"fam"
+            "familyMember"  -> "famMem"
             "technicalSkills" -> "ts"
             "other" -> "ot"
             else -> "gen"

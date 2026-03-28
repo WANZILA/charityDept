@@ -14,6 +14,26 @@ sealed class Screen(val route: String) {
     object ChildrenDashboard : Screen("children")
 
     object RegisterDashboard : Screen("register")
+
+    object FamiliesList : Screen("families_list")
+    object FamilyForm : Screen("familyForm?familyId={familyId}") {
+        fun newFamily() = "familyForm"
+        fun edit(id: String) = "familyForm?familyId=$id"
+    }
+
+    object FamilyDetails : Screen("family_details/{familyId}") {
+        fun createRoute(familyId: String) = "family_details/$familyId"
+    }
+
+    object FamilyMemberForm : Screen(
+        "familyMemberForm?familyId={familyId}&familyMemberId={familyMemberId}"
+    ) {
+        fun newMember(familyId: String) = "familyMemberForm?familyId=$familyId"
+        fun edit(familyId: String, familyMemberId: String) =
+            "familyMemberForm?familyId=$familyId&familyMemberId=$familyMemberId"
+    }
+
+
     object Migration: Screen("migration")
 
     /*** Admin  *
