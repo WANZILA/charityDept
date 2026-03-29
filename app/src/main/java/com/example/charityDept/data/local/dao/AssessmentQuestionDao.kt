@@ -22,13 +22,15 @@ interface AssessmentQuestionDao {
     @Query("""
     SELECT q.* FROM assessment_questions q
     LEFT JOIN assessment_taxonomy t
-      ON t.categoryKey = q.categoryKey
+      ON t.assessmentKey = q.assessmentKey
+     AND t.categoryKey = q.categoryKey
      AND t.subCategoryKey = q.subCategoryKey
      AND t.isDeleted = 0
      AND t.isActive = 1
     WHERE q.isDeleted = 0
       AND q.isActive = 1
     ORDER BY 
+      q.assessmentKey,
       COALESCE(t.indexNum, 999999),
       COALESCE(q.indexNum, 999999),
       q.questionId
@@ -38,29 +40,28 @@ interface AssessmentQuestionDao {
     @Query("""
     SELECT q.* FROM assessment_questions q
     LEFT JOIN assessment_taxonomy t
-      ON t.categoryKey = q.categoryKey
+      ON t.assessmentKey = q.assessmentKey
+     AND t.categoryKey = q.categoryKey
      AND t.subCategoryKey = q.subCategoryKey
      AND t.isDeleted = 0
      AND t.isActive = 1
     WHERE q.isDeleted = 0
       AND q.isActive = 1
     ORDER BY 
+      q.assessmentKey,
       COALESCE(t.indexNum, 999999),
       COALESCE(q.indexNum, 999999),
       q.questionId
 """)
     suspend fun getActiveOnce(): List<AssessmentQuestion>
 
-
-    // /// ADDED: Admin list (includes inactive, excludes deleted)
     @Query("""
     SELECT * FROM assessment_questions
     WHERE isDeleted = 0
-    ORDER BY categoryKey, subCategoryKey, indexNum, questionId
+    ORDER BY assessmentKey, categoryKey, subCategoryKey, indexNum, questionId
 """)
     fun observeAllAdmin(): Flow<List<AssessmentQuestion>>
 
-    // /// ADDED: Load one
     @Query("""
         SELECT * FROM assessment_questions
         WHERE questionId = :questionId
@@ -83,7 +84,6 @@ interface AssessmentQuestionDao {
         nowNanos: Long
     ): Int
 
-    // ✅ HARD DELETE tombstones during cleanup ONLY
     @Query("""
         DELETE FROM assessment_questions
         WHERE isDeleted = 1
@@ -92,14 +92,12 @@ interface AssessmentQuestionDao {
     """)
     suspend fun hardDeleteOldTombstones(cutoff: Timestamp): Int
 
-    // ✅ HARD DELETE guarded (single row) — only if already deleted
     @Query("""
         DELETE FROM assessment_questions
         WHERE questionId = :questionId
           AND isDeleted = 1
     """)
     suspend fun hardDeleteIfDeleted(questionId: String): Int
-
 
     @Query("SELECT * FROM assessment_questions WHERE isDirty = 1 ORDER BY updatedAt ASC LIMIT :limit")
     suspend fun loadDirtyBatch(limit: Int): List<AssessmentQuestion>
@@ -112,7 +110,4 @@ interface AssessmentQuestionDao {
     WHERE questionId IN (:ids)
 """)
     suspend fun markBatchPushed(ids: List<String>, newUpdatedAt: Timestamp)
-
-
 }
-

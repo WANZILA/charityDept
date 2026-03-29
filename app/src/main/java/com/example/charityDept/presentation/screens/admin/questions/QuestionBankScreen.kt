@@ -61,11 +61,22 @@ fun QuestionBankScreen(
                         modifier = Modifier.fillMaxWidth().clickable { onEdit(q.questionId) }
                     ) {
                         Column(Modifier.padding(14.dp)) {
-                            Text("${q.category} • ${q.subCategory}", style = MaterialTheme.typography.labelMedium)
+                            Text(
+                                q.assessmentLabel.ifBlank { q.assessmentKey },
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                "${q.category} • ${q.subCategory}",
+                                style = MaterialTheme.typography.labelMedium
+                            )
                             Spacer(Modifier.height(6.dp))
                             Text(q.question, style = MaterialTheme.typography.titleMedium)
                             Spacer(Modifier.height(8.dp))
-                            Text(if (q.isActive) "Active" else "Inactive", style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                if (q.isActive) "Active" else "Inactive",
+                                style = MaterialTheme.typography.labelSmall
+                            )
                         }
                     }
                 }
@@ -73,4 +84,3 @@ fun QuestionBankScreen(
         }
     }
 }
-

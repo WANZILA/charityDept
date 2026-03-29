@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 data class AssessmentSessionRow(
     val generalId: String,
     val lastUpdated: Long,
+    val assessmentLabel: String,
     val questionSnapshot: String,
     val itemCount: Int,
     val enteredByUid: String?
@@ -85,6 +86,7 @@ ORDER BY
         SELECT
           generalId AS generalId,
           MAX(updatedAt) AS lastUpdated,
+          COALESCE(MIN(NULLIF(assessmentLabel, '')), 'Assessment') AS assessmentLabel,
           COALESCE(MIN(questionSnapshot), '') AS questionSnapshot,
           COUNT(*) AS itemCount,
           MIN(enteredByUid) AS enteredByUid

@@ -17,13 +17,16 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionFormScreen(
-    questionIdArg: String?, // null -> new
+    questionIdArg: String?,
     navigateUp: () -> Unit,
     onDone: (questionId: String) -> Unit,
     vm: AssessmentQuestionAdminViewModel = hiltViewModel()
 ) {
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
+
+    var assessmentKey by remember { mutableStateOf("") }
+    var assessmentLabel by remember { mutableStateOf("") }
 
     var category by remember { mutableStateOf("") }
     var subCategory by remember { mutableStateOf("") }
@@ -34,30 +37,41 @@ fun QuestionFormScreen(
     var categoryKey by remember { mutableStateOf("") }
     var subCategoryKey by remember { mutableStateOf("") }
 
-    // ✅ confirm delete dialog
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     val taxonomy by vm.taxonomy.collectAsStateWithLifecycle()
 
-    val categories = remember(taxonomy) {
+    val assessments = remember(taxonomy) {
         taxonomy
+            .groupBy { it.assessmentKey }
+            .mapNotNull { (key, items) ->
+                val label = items.firstOrNull()?.assessmentLabel.orEmpty()
+                if (key.isBlank()) null else key to label.ifBlank { key }
+            }
+            .sortedBy { it.second }
+    }
+
+    val categories = remember(taxonomy, assessmentKey) {
+        taxonomy
+            .filter { it.assessmentKey == assessmentKey }
             .groupBy { it.categoryKey }
             .map { (key, items) -> key to (items.firstOrNull()?.categoryLabel ?: key) }
             .sortedBy { it.second }
     }
 
-    val subCategories = remember(taxonomy, categoryKey) {
+    val subCategories = remember(taxonomy, assessmentKey, categoryKey) {
         taxonomy
-            .filter { it.categoryKey == categoryKey }
+            .filter { it.assessmentKey == assessmentKey && it.categoryKey == categoryKey }
             .sortedBy { it.indexNum }
     }
 
-    // ✅ when editing (ONLY ONCE — removed duplicate LaunchedEffect)
     LaunchedEffect(questionIdArg) {
         val id = questionIdArg ?: return@LaunchedEffect
         loading = true
         val existing = vm.loadOnce(id)
         if (existing != null) {
+            assessmentKey = existing.assessmentKey
+            assessmentLabel = existing.assessmentLabel
             category = existing.category
             subCategory = existing.subCategory
             categoryKey = existing.categoryKey
@@ -69,15 +83,12 @@ fun QuestionFormScreen(
         loading = false
     }
 
-    // ✅ delete confirm dialog
     if (showDeleteConfirm && questionIdArg != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("Delete Question?") },
             text = {
-                Text(
-                    "This will soft-delete the question (it can be cleaned up later by the cleanup worker)."
-                )
+                Text("This will soft-delete the question (it can be cleaned up later by the cleanup worker).")
             },
             confirmButton = {
                 TextButton(
@@ -111,6 +122,8 @@ fun QuestionFormScreen(
                             scope.launch {
                                 val draft = AssessmentQuestion(
                                     questionId = questionIdArg ?: "",
+                                    assessmentKey = assessmentKey.trim(),
+                                    assessmentLabel = assessmentLabel.trim(),
                                     categoryKey = categoryKey.trim(),
                                     subCategoryKey = subCategoryKey.trim(),
                                     category = category.trim(),
@@ -121,15 +134,17 @@ fun QuestionFormScreen(
                                 )
                                 vm.upsert(draft) { id -> onDone(id) }
                             }
-                        }
+                        },
+                        enabled = assessmentKey.isNotBlank() &&
+                                categoryKey.isNotBlank() &&
+                                subCategoryKey.isNotBlank() &&
+                                question.isNotBlank()
                     ) {
                         Icon(Icons.Outlined.Save, contentDescription = "Save")
                     }
 
                     if (questionIdArg != null) {
-                        IconButton(
-                            onClick = { showDeleteConfirm = true }
-                        ) {
+                        IconButton(onClick = { showDeleteConfirm = true }) {
                             Icon(Icons.Outlined.Delete, contentDescription = "Delete")
                         }
                     }
@@ -146,16 +161,54 @@ fun QuestionFormScreen(
         ) {
             if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
 
-            // CATEGORY dropdown
+            var assessmentExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = assessmentExpanded,
+                onExpandedChange = { assessmentExpanded = !assessmentExpanded }
+            ) {
+                OutlinedTextField(
+                    value = assessmentLabel,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Main Assessment") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = assessmentExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = assessmentExpanded,
+                    onDismissRequest = { assessmentExpanded = false }
+                ) {
+                    assessments.forEach { (key, label) ->
+                        DropdownMenuItem(
+                            text = { Text(label) },
+                            onClick = {
+                                assessmentKey = key
+                                assessmentLabel = label
+
+                                categoryKey = ""
+                                category = ""
+                                subCategoryKey = ""
+                                subCategory = ""
+
+                                assessmentExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             var catExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = catExpanded,
-                onExpandedChange = { catExpanded = !catExpanded }
+                onExpandedChange = {
+                    if (assessmentKey.isNotBlank()) catExpanded = !catExpanded
+                }
             ) {
                 OutlinedTextField(
                     value = category,
                     onValueChange = {},
                     readOnly = true,
+                    enabled = assessmentKey.isNotBlank(),
                     label = { Text("Category") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
@@ -170,11 +223,8 @@ fun QuestionFormScreen(
                             onClick = {
                                 categoryKey = key
                                 category = label
-
-                                // reset subcategory when category changes
                                 subCategoryKey = ""
                                 subCategory = ""
-
                                 catExpanded = false
                             }
                         )
@@ -182,19 +232,18 @@ fun QuestionFormScreen(
                 }
             }
 
-            // SUBCATEGORY dropdown
             var subExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
                 expanded = subExpanded,
                 onExpandedChange = {
-                    if (categoryKey.isNotBlank()) subExpanded = !subExpanded
+                    if (assessmentKey.isNotBlank() && categoryKey.isNotBlank()) subExpanded = !subExpanded
                 }
             ) {
                 OutlinedTextField(
                     value = subCategory,
                     onValueChange = {},
                     readOnly = true,
-                    enabled = categoryKey.isNotBlank(),
+                    enabled = assessmentKey.isNotBlank() && categoryKey.isNotBlank(),
                     label = { Text("Sub Category") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = subExpanded) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
@@ -238,4 +287,3 @@ fun QuestionFormScreen(
         }
     }
 }
-

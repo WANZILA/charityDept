@@ -100,18 +100,33 @@ fun ChildAssessmentHistoryScreen(
                                 .fillMaxWidth()
                                 .clickable { onOpenSession(row.generalId) }
                         ) {
-
-                            val titleLabel = when (mode) {
-                                "QA" -> "Assessments"
-                                "OBS" -> "Observations"
-                                else -> "Assessments"
+                            val sessionTypeLabel = when (mode) {
+                                "QA" -> "Questions Session"
+                                "OBS" -> "Observation Session"
+                                else -> "Assessment Session"
                             }
+
                             Column(Modifier.padding(14.dp)) {
-                                Text(titleLabel, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    row.assessmentLabel,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Spacer(Modifier.height(4.dp))
+
+                                Text(
+                                    sessionTypeLabel,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
                                 Spacer(Modifier.height(6.dp))
 
-                                Text("Question: ${row.questionSnapshot}", style = MaterialTheme.typography.labelSmall)
-                                Text("Count: ${row.itemCount}", style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    "Preview: ${row.questionSnapshot}",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                                Text(
+                                    "Items: ${row.itemCount}",
+                                    style = MaterialTheme.typography.labelSmall
+                                )
 
                                 val lastUpdatedMillis = row.lastUpdated
                                 Text(

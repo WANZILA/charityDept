@@ -208,6 +208,8 @@ class AssessmentQuestionPullWorker @AssistedInject constructor(
 
                             AssessmentQuestion(
                                 questionId = id,
+                                assessmentKey = doc.getString("assessmentKey") ?: "",
+                                assessmentLabel = doc.getString("assessmentLabel") ?: "",
                                 category = doc.getString("category") ?: "",
                                 subCategory = doc.getString("subCategory") ?: "",
                                 categoryKey = doc.getString("categoryKey") ?: "",

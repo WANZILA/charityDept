@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Delete // /// ADDED
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -16,7 +16,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.charityDept.data.model.AssessmentAnswer
 import kotlinx.coroutines.launch
 
-private data class Draft(val answer: String, val notes: String, val score: Int)
+private data class Draft(
+    val answer: String,
+    val recommendation: String,
+    val notes: String,
+    val score: Int
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +49,6 @@ fun ChildAssessmentDetailScreen(
 
     val drafts = remember(childId, generalId, mode) { mutableStateMapOf<String, Draft>() }
 
-    // /// ADDED: delete confirm state
     var deleteTarget by remember { mutableStateOf<AssessmentAnswer?>(null) }
 
     LaunchedEffect(ui.items) {
@@ -55,7 +59,15 @@ fun ChildAssessmentDetailScreen(
         }
 
         ui.items.forEach { a ->
-            drafts.putIfAbsent(a.answerId, Draft(a.answer, a.notes, a.score))
+            drafts.putIfAbsent(
+                a.answerId,
+                Draft(
+                    answer = a.answer,
+                    recommendation = a.recommendation,
+                    notes = a.notes,
+                    score = a.score
+                )
+            )
         }
     }
 
@@ -63,11 +75,15 @@ fun ChildAssessmentDetailScreen(
         return ui.items.map { base ->
             val d = drafts[base.answerId]
             if (d == null) base
-            else base.copy(answer = d.answer, notes = d.notes, score = d.score)
+            else base.copy(
+                answer = d.answer,
+                recommendation = d.recommendation,
+                notes = d.notes,
+                score = d.score
+            )
         }
     }
 
-    // /// ADDED: confirm dialog
     if (deleteTarget != null) {
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
@@ -145,21 +161,36 @@ fun ChildAssessmentDetailScreen(
                     items = ui.items,
                     key = { _, item -> item.answerId }
                 ) { _, item ->
-                    val draft = drafts[item.answerId] ?: Draft(item.answer, item.notes, item.score)
+                    val draft = drafts[item.answerId]
+                        ?: Draft(
+                            answer = item.answer,
+                            recommendation = item.recommendation,
+                            notes = item.notes,
+                            score = item.score
+                        )
 
                     ElevatedCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(14.dp)) {
 
-                            // /// CHANGED: row header + delete action
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    "${item.category} • ${item.subCategory}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    modifier = Modifier.weight(1f)
-                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    if (item.assessmentLabel.isNotBlank()) {
+                                        Text(
+                                            item.assessmentLabel,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                        Spacer(Modifier.height(4.dp))
+                                    }
+
+                                    Text(
+                                        "${item.category} • ${item.subCategory}",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+
                                 IconButton(onClick = { deleteTarget = item }) {
                                     Icon(Icons.Outlined.Delete, contentDescription = "Delete")
                                 }
@@ -179,6 +210,18 @@ fun ChildAssessmentDetailScreen(
                                 },
                                 label = { Text("Answer / Observation") },
                                 modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Spacer(Modifier.height(10.dp))
+
+                            OutlinedTextField(
+                                value = draft.recommendation,
+                                onValueChange = { v ->
+                                    drafts[item.answerId] = draft.copy(recommendation = v)
+                                },
+                                label = { Text("Recommendation") },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 2
                             )
 
                             Spacer(Modifier.height(10.dp))
@@ -211,4 +254,3 @@ fun ChildAssessmentDetailScreen(
         }
     }
 }
-

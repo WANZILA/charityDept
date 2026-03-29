@@ -91,11 +91,15 @@ class AssessmentAnswerPullWorker @AssistedInject constructor(
             childId = getString("childId") ?: "",
             questionId = getString("questionId") ?: "",
 
+            assessmentKey = getString("assessmentKey") ?: "",
+            assessmentLabel = getString("assessmentLabel") ?: "",
+
             category = getString("category") ?: "",
             subCategory = getString("subCategory") ?: "",
             questionSnapshot = getString("questionSnapshot"),
 
             answer = getString("answer") ?: "",
+            recommendation = getString("recommendation") ?: "",
             score = (getLong("score") ?: 0L).toInt(),
             notes = getString("notes") ?: "",
 
@@ -110,6 +114,7 @@ class AssessmentAnswerPullWorker @AssistedInject constructor(
             deletedAt = deletedAt,
             version = version
         )
+
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
