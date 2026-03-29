@@ -35,6 +35,10 @@ sealed class Screen(val route: String) {
 
     object FamilyDashboard : Screen("family_dashboard")
 
+    object SingleFamilyDashboard : Screen("single_family_dashboard/{familyId}") {
+        fun createRoute(familyId: String) = "single_family_dashboard/$familyId"
+    }
+
 
     object Migration: Screen("migration")
 

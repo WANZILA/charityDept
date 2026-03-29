@@ -54,10 +54,9 @@ class FamilyMemberFormViewModel @Inject constructor(
 
     fun ensureNewIdIfNeeded(familyId: String) {
         if (_ui.value.familyMemberId.isBlank()) {
-            val now = Timestamp.now()
             _ui.value = _ui.value.copy(
                 familyId = familyId,
-                familyMemberId = "family_member_${now.seconds}_${now.nanoseconds}"
+                familyMemberId = GenerateId.generateId("familyMember")
             )
         }
     }
@@ -102,8 +101,13 @@ class FamilyMemberFormViewModel @Inject constructor(
     fun onRelationship(v: String) { _ui.value = _ui.value.copy(relationship = v) }
     fun onOccupationOrSchoolGrade(v: String) { _ui.value = _ui.value.copy(occupationOrSchoolGrade = v) }
     fun onHealthOrDisabilityStatus(v: String) { _ui.value = _ui.value.copy(healthOrDisabilityStatus = v) }
-    fun onPersonalPhone1(v: String) { _ui.value = _ui.value.copy(personalPhone1 = v) }
-    fun onPersonalPhone2(v: String) { _ui.value = _ui.value.copy(personalPhone2 = v) }
+    fun onPersonalPhone1(v: String) {
+        _ui.value = _ui.value.copy(personalPhone1 = v.filter { it.isDigit() })
+    }
+
+    fun onPersonalPhone2(v: String) {
+        _ui.value = _ui.value.copy(personalPhone2 = v.filter { it.isDigit() })
+    }
     fun onNinNumber(v: String) { _ui.value = _ui.value.copy(ninNumber = v) }
 
     fun save() {
@@ -119,7 +123,7 @@ class FamilyMemberFormViewModel @Inject constructor(
 
                 val isNew = state.createdAt == null
                 val now = Timestamp.now()
-                val id = GenerateId.generateId("familyMember")
+                val id = if (isNew) GenerateId.generateId("familyMember") else state.familyMemberId
 
                 val member = FamilyMember(
                     familyMemberId = id,

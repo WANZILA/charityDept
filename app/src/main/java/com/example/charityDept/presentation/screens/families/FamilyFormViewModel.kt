@@ -66,7 +66,7 @@ class FamilyFormViewModel @Inject constructor(
     fun ensureNewIdIfNeeded() {
         if (_ui.value.familyId.isBlank()) {
             _ui.value = _ui.value.copy(
-                familyId = "family_${Timestamp.now().seconds}_${Timestamp.now().nanoseconds}"
+                familyId = GenerateId.generateId("family")
             )
         }
     }
@@ -100,8 +100,13 @@ class FamilyFormViewModel @Inject constructor(
     }
     fun onAddressLocation(v: String) { _ui.value = _ui.value.copy(addressLocation = v) }
     fun onIsBornAgain(v: Boolean) { _ui.value = _ui.value.copy(isBornAgain = v) }
-    fun onPersonalPhone1(v: String) { _ui.value = _ui.value.copy(personalPhone1 = v) }
-    fun onPersonalPhone2(v: String) { _ui.value = _ui.value.copy(personalPhone2 = v) }
+    fun onPersonalPhone1(v: String) {
+        _ui.value = _ui.value.copy(personalPhone1 = v.filter { it.isDigit() })
+    }
+
+    fun onPersonalPhone2(v: String) {
+        _ui.value = _ui.value.copy(personalPhone2 = v.filter { it.isDigit() })
+    }
     fun onNinNumber(v: String) { _ui.value = _ui.value.copy(ninNumber = v) }
 
     fun onMemberAncestralCountry(v: String) { _ui.value = _ui.value.copy(memberAncestralCountry = v) }
@@ -134,7 +139,8 @@ class FamilyFormViewModel @Inject constructor(
                 _ui.value = _ui.value.copy(saving = true, error = null)
 
                 val isNew = state.familyId.isBlank()
-                val id  = GenerateId.generateId("family")
+                val id = if (isNew) GenerateId.generateId("family") else state.familyId
+
                 val family = Family(
                     familyId = id,
                     caseReferenceNumber = state.caseReferenceNumber.trim(),
@@ -159,11 +165,11 @@ class FamilyFormViewModel @Inject constructor(
                     memberRentalSubCounty = state.memberRentalSubCounty.trim(),
                     memberRentalParish = state.memberRentalParish.trim(),
                     memberRentalVillage = state.memberRentalVillage.trim(),
-                    createdAt = if (isNew) now else state.dateOfAssessment ?: now,
+                    createdAt = state.createdAt,
                     updatedAt = now,
                     isDirty = true,
                     isDeleted = false,
-
+                    version = state.version
                 )
 
                 val savedId = repo.upsertFamily(family, isNew = isNew)

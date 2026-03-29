@@ -25,7 +25,6 @@ data class FamilyDetailsSnapshot(
     val members: List<FamilyMember> = emptyList()
 )
 
-
 data class FamilyDashboardSnapshot(
     val totalFamilies: Int = 0,
     val totalMembers: Int = 0,
@@ -34,23 +33,19 @@ data class FamilyDashboardSnapshot(
     val membersMissingNin: Int = 0,
     val recentFamilies: Int = 0
 )
+
 interface OfflineFamiliesRepository {
     fun streamFamilies(): Flow<FamilySnapshot>
     fun observeFamily(familyId: String): Flow<Family?>
     fun observeFamilyDetails(familyId: String): Flow<FamilyDetailsSnapshot>
     fun observeMembersByFamily(familyId: String): Flow<List<FamilyMember>>
     suspend fun upsertFamily(family: Family, isNew: Boolean): String
-
-
     suspend fun softDeleteFamily(familyId: String)
-
     fun observeFamilyMember(familyMemberId: String): Flow<FamilyMember?>
-
     suspend fun upsertFamilyMember(
         member: FamilyMember,
         isNew: Boolean
     ): String
-
     suspend fun softDeleteFamilyMember(familyMemberId: String)
 }
 
@@ -59,6 +54,7 @@ class OfflineFamiliesRepositoryImpl @Inject constructor(
     private val familyDao: FamilyDao,
     @ApplicationContext private val appContext: Context
 ) : OfflineFamiliesRepository {
+
     override fun streamFamilies(): Flow<FamilySnapshot> =
         combine(
             familyDao.observeAllActiveFamilies(),
@@ -94,15 +90,15 @@ class OfflineFamiliesRepositoryImpl @Inject constructor(
         isNew: Boolean
     ): String {
         val now = Timestamp.now()
-        val id = member.familyMemberId.ifBlank { "family_member_${now.seconds}_${now.nanoseconds}" }
+        val id = member.familyMemberId.ifBlank { GenerateId.generateId("familyMember") }
 
         val toSave = member.copy(
             familyMemberId = id,
-            createdAt = if (isNew) now else member.createdAt,
+            createdAt = if (isNew) member.createdAt.takeIf { it != null } ?: now else member.createdAt,
             updatedAt = now,
             isDirty = true,
             isDeleted = false,
-            version = if (isNew) 1L else member.version
+            version = if (isNew) (member.version + 1).coerceAtLeast(1) else (member.version + 1).coerceAtLeast(1)
         )
 
         familyDao.upsertFamilyMember(toSave)
@@ -120,11 +116,11 @@ class OfflineFamiliesRepositoryImpl @Inject constructor(
 
     override suspend fun upsertFamily(family: Family, isNew: Boolean): String {
         val now = Timestamp.now()
-        val id = GenerateId.generateId("family")
+        val id = family.familyId.ifBlank { GenerateId.generateId("family") }
 
         val toSave = family.copy(
             familyId = id,
-            createdAt = if (isNew) now else family.createdAt,
+            createdAt = if (isNew) family.createdAt else family.createdAt,
             updatedAt = now,
             isDirty = true,
             isDeleted = false,

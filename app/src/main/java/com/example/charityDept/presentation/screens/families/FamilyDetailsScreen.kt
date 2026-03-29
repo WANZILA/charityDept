@@ -105,9 +105,9 @@ fun FamilyDetailsScreen(
                         IconButton(onClick = { vm.refresh(family.familyId) }, enabled = !ui.deleting) {
                             Icon(Icons.Outlined.Refresh, contentDescription = "Refresh")
                         }
-                        IconButton(onClick = { onAddMember(family.familyId) } ) {
-                            Icon(Icons.Outlined.AddBox, contentDescription = "Add")
-                        }
+//                        IconButton(onClick = { onAddMember(family.familyId) } ) {
+//                            Icon(Icons.Outlined.AddBox, contentDescription = "Add")
+//                        }
 
                         DeleteIconWithConfirm(
                             label = "family ${family.primaryContactHeadOfHousehold}".trim(),

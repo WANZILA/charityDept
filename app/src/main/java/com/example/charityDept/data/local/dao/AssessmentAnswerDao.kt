@@ -26,45 +26,51 @@ interface AssessmentAnswerDao {
     @Upsert
     suspend fun upsertAll(items: List<AssessmentAnswer>)
 
-
     @Query("""
-    SELECT
-      COALESCE(a.answerId, :generalId || '_' || q.questionId) AS answerId,
-      :generalId AS generalId,
-      :childId  AS childId,
-      q.questionId AS questionId,
-      q.category AS category,
-      q.subCategory AS subCategory,
-      q.question AS questionSnapshot,
-      COALESCE(a.answer, '') AS answer,
-      COALESCE(a.score, 0) AS score,
-      COALESCE(a.notes, '') AS notes,
-      COALESCE(a.enteredByUid, '') AS enteredByUid,
-      COALESCE(a.lastEditedByUid, '') AS lastEditedByUid,
-      COALESCE(a.createdAt, 0) AS createdAt,
-      COALESCE(a.updatedAt, 0) AS updatedAt,
-      COALESCE(a.isDirty, 0) AS isDirty,
-      0 AS isDeleted,
-      NULL AS deletedAt,
-      COALESCE(a.version, 0) AS version
-    FROM assessment_questions q
-    LEFT JOIN assessment_answers a
-      ON a.questionId = q.questionId
-     AND a.childId = :childId
-     AND a.generalId = :generalId
-     AND a.isDeleted = 0
-    LEFT JOIN assessment_taxonomy t
-      ON t.categoryKey = q.categoryKey
-     AND t.subCategoryKey = q.subCategoryKey
-     AND t.isDeleted = 0
-     AND t.isActive = 1
-    WHERE q.isDeleted = 0
-      AND q.isActive = 1
-    ORDER BY
-      COALESCE(t.indexNum, 999999),
-      COALESCE(q.indexNum, 999999),
-      COALESCE(q.subCategoryKey, ''),
-      q.questionId
+SELECT
+  COALESCE(a.answerId, :generalId || '_' || q.questionId) AS answerId,
+  :generalId AS generalId,
+  :childId AS childId,
+  q.questionId AS questionId,
+
+  COALESCE(a.assessmentKey, q.assessmentKey, t.assessmentKey, '') AS assessmentKey,
+  COALESCE(a.assessmentLabel, q.assessmentLabel, t.assessmentLabel, '') AS assessmentLabel,
+
+  q.category AS category,
+  q.subCategory AS subCategory,
+  q.question AS questionSnapshot,
+
+  COALESCE(a.answer, '') AS answer,
+  COALESCE(a.recommendation, '') AS recommendation,
+  COALESCE(a.score, 0) AS score,
+  COALESCE(a.notes, '') AS notes,
+  COALESCE(a.enteredByUid, '') AS enteredByUid,
+  COALESCE(a.lastEditedByUid, '') AS lastEditedByUid,
+  COALESCE(a.createdAt, 0) AS createdAt,
+  COALESCE(a.updatedAt, 0) AS updatedAt,
+  COALESCE(a.isDirty, 0) AS isDirty,
+  0 AS isDeleted,
+  NULL AS deletedAt,
+  COALESCE(a.version, 0) AS version
+FROM assessment_questions q
+LEFT JOIN assessment_answers a
+  ON a.questionId = q.questionId
+ AND a.childId = :childId
+ AND a.generalId = :generalId
+ AND a.isDeleted = 0
+LEFT JOIN assessment_taxonomy t
+  ON t.assessmentKey = q.assessmentKey
+ AND t.categoryKey = q.categoryKey
+ AND t.subCategoryKey = q.subCategoryKey
+ AND t.isDeleted = 0
+ AND t.isActive = 1
+WHERE q.isDeleted = 0
+  AND q.isActive = 1
+ORDER BY
+  COALESCE(t.indexNum, 999999),
+  COALESCE(q.indexNum, 999999),
+  COALESCE(q.subCategoryKey, ''),
+  q.questionId
 """)
     fun observeSession(childId: String, generalId: String): Flow<List<AssessmentAnswer>>
 
