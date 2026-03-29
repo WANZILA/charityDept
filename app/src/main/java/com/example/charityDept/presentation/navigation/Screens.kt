@@ -33,6 +33,8 @@ sealed class Screen(val route: String) {
             "familyMemberForm?familyId=$familyId&familyMemberId=$familyMemberId"
     }
 
+    object FamilyDashboard : Screen("family_dashboard")
+
 
     object Migration: Screen("migration")
 

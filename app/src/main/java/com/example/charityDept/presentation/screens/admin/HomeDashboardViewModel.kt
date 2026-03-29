@@ -5,6 +5,7 @@ package com.example.charityDept.presentation.screens.admin
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.charityDept.data.local.dao.FamilyDao
 import com.example.charityDept.data.local.dao.KpiDao
 import com.example.charityDept.data.model.Child
 import com.example.charityDept.data.model.EducationPreference
@@ -37,6 +38,8 @@ data class HomeUi(
     val childrenNewThisMonth: Int = 0,
     val childrenGraduated: Int = 0,
     val resettled: Int = 0,
+    val familiesTotal: Int = 0,
+    val familyMembersTotal: Int = 0,
     val toBeResettled: Int = 0,
     val eventsToday: Int = 0,
     val eventsActiveNow: Int = 0,
@@ -60,38 +63,91 @@ private fun todayKey(): String {
 class HomeDashboardViewModel @Inject constructor(
     private val childrenRepo: OfflineChildrenRepository,
     private val eventsRepo: OfflineEventsRepository,
+    private val familyDao: FamilyDao,
     private val kpiDao: KpiDao
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(HomeUi())
     val ui: StateFlow<HomeUi> = _ui.asStateFlow()
 
+
     init {
         viewModelScope.launch {
-            // Make sure counter rows exist so observe() never fails
             ensureKeys()
 
-            combine(
+            val counterFlow = combine(
                 kpiDao.observe(KPI_EVENTS_TOTAL).map { it.toInt() }.catch { emit(0) },
                 kpiDao.observe(todayKey()).map { it.toInt() }.catch { emit(0) },
+                familyDao.observeActiveFamilyCount().catch { emit(0) },
+                familyDao.observeActiveFamilyMemberCount().catch { emit(0) }
+            ) { eventsTotal, eventsTodayCnt, familiesTotal, familyMembersTotal ->
+                HomeCounterSnapshot(
+                    eventsTotal = eventsTotal,
+                    eventsToday = eventsTodayCnt,
+                    familiesTotal = familiesTotal,
+                    familyMembersTotal = familyMembersTotal
+                )
+            }
+
+            val dataFlow = combine(
                 childrenRepo.streamChildren(),
                 eventsRepo.streamEventSnapshots()
-            ) { eventsTotal, eventsTodayCnt, children, events ->
-                val computed = compute(children, events)
+            ) { children, events ->
+                HomeDataSnapshot(
+                    children = children,
+                    events = events
+                )
+            }
+
+            combine(
+                counterFlow,
+                dataFlow
+            ) { counters, data ->
+                val computed = compute(data.children, data.events)
                 computed.copy(
-                    eventsToday = eventsTodayCnt
-                    // You can expose eventsTotal somewhere if you add it to HomeUi
+                    eventsToday = counters.eventsToday,
+                    familiesTotal = counters.familiesTotal,
+                    familyMembersTotal = counters.familyMembersTotal
                 )
             }
                 .onStart { _ui.value = _ui.value.copy(loading = true, error = null) }
                 .catch { e ->
-                    _ui.value = _ui.value.copy(loading = false, error = e.message ?: "Failed to load")
+                    _ui.value = _ui.value.copy(
+                        loading = false,
+                        error = e.message ?: "Failed to load"
+                    )
                 }
                 .collect { state ->
                     _ui.value = state.copy(loading = false, error = null)
                 }
         }
     }
+//    init {
+//        viewModelScope.launch {
+//            // Make sure counter rows exist so observe() never fails
+//            ensureKeys()
+//
+//            combine(
+//                kpiDao.observe(KPI_EVENTS_TOTAL).map { it.toInt() }.catch { emit(0) },
+//                kpiDao.observe(todayKey()).map { it.toInt() }.catch { emit(0) },
+//               childrenRepo.streamChildren(),
+//                eventsRepo.streamEventSnapshots()
+//            ) { eventsTotal, eventsTodayCnt,  children, events ->
+//                val computed = compute(children, events)
+//                computed.copy(
+//                    eventsToday = eventsTodayCnt
+//                    // You can expose eventsTotal somewhere if you add it to HomeUi
+//                )
+//            }
+//                .onStart { _ui.value = _ui.value.copy(loading = true, error = null) }
+//                .catch { e ->
+//                    _ui.value = _ui.value.copy(loading = false, error = e.message ?: "Failed to load")
+//                }
+//                .collect { state ->
+//                    _ui.value = state.copy(loading = false, error = null)
+//                }
+//        }
+//    }
 
     private suspend fun ensureKeys() {
         // Idempotent: creates rows if missing, else does nothing.
@@ -162,5 +218,17 @@ class HomeDashboardViewModel @Inject constructor(
         val start = c.timeInMillis; c.add(Calendar.MONTH, 1); c.add(Calendar.MILLISECOND, -1)
         return start to c.timeInMillis
     }
+
+    private data class HomeCounterSnapshot(
+        val eventsTotal: Int = 0,
+        val eventsToday: Int = 0,
+        val familiesTotal: Int = 0,
+        val familyMembersTotal: Int = 0
+    )
+
+    private data class HomeDataSnapshot(
+        val children: List<Child> = emptyList(),
+        val events: List<Event> = emptyList()
+    )
 }
 

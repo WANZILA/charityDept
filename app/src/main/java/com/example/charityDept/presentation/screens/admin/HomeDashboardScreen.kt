@@ -33,8 +33,8 @@ fun HomeDashboardScreen(
     toYetAccept: () -> Unit,
     toResettled: () -> Unit,
     toBeResettled: () -> Unit,
+    toFamilyDashboard: () -> Unit,
     vm: HomeDashboardViewModel = hiltViewModel(),
-//    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val ui by vm.ui.collectAsState()
 
@@ -104,6 +104,25 @@ fun HomeDashboardScreen(
 
 //                         StatCard("Events Today", ui.eventsToday.toString(), Modifier.weight(1f), onClick = toEventsList)
 
+                    }
+                }
+
+                item {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            "Families",
+                            ui.familiesTotal.toString(),
+                            modifier = Modifier.weight(1f),
+                            onClick = toFamilyDashboard
+                        )
+                        StatCard(
+                            "Family Members",
+                            ui.familyMembersTotal.toString(),
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
 //                item {

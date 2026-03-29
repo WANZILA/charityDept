@@ -4,6 +4,8 @@ package com.example.charityDept.core.sync
 import android.content.Context
 import com.example.charityDept.core.sync.attendance.AttendanceSyncScheduler
 import com.example.charityDept.core.sync.event.EventSyncScheduler
+import com.example.charityDept.core.sync.family.FamilySyncScheduler
+import com.example.charityDept.core.sync.familymember.FamilyMemberSyncScheduler
 
 object SyncCoordinatorScheduler {
 
@@ -24,10 +26,13 @@ object SyncCoordinatorScheduler {
 
         //events
         EventSyncScheduler.enqueuePeriodicPush(ctx)
+        FamilySyncScheduler.enqueuePeriodicPush(ctx)
 
-        AssessmentQuestionSyncScheduler.enqueuePeriodicPull(ctx)
+        FamilyMemberSyncScheduler.enqueuePeriodicPush(ctx)
 
-        AssessmentAnswerSyncScheduler.enqueuePeriodicPull(ctx)
+        AssessmentQuestionSyncScheduler.enqueuePeriodicPush(ctx)
+
+        AssessmentAnswerSyncScheduler.enqueuePeriodicPush(ctx)
 
         // Cleaner: local tombstone cleanup
         CleanerScheduler.enqueuePeriodic(ctx, retentionDays = cleanerRetentionDays)
@@ -42,8 +47,11 @@ object SyncCoordinatorScheduler {
 
         AttendanceSyncScheduler.enqueuePeriodicPush(ctx)
         EventSyncScheduler.enqueuePeriodicPull(ctx)
-        AssessmentQuestionSyncScheduler.enqueuePeriodicPush(ctx)
-        AssessmentAnswerSyncScheduler.enqueuePeriodicPush(ctx)
+        FamilySyncScheduler.enqueuePeriodicPull(ctx)
+        FamilyMemberSyncScheduler.enqueuePeriodicPull(ctx)
+
+        AssessmentQuestionSyncScheduler.enqueuePeriodicPull(ctx)
+        AssessmentAnswerSyncScheduler.enqueuePeriodicPull(ctx)
         CleanerScheduler.enqueuePeriodic(ctx, cleanerRetentionDays)
 
 
@@ -60,6 +68,8 @@ object SyncCoordinatorScheduler {
         ChildrenSyncScheduler.enqueuePushNow(ctx)
         AttendanceSyncScheduler.enqueuePushNow(ctx)
         EventSyncScheduler.enqueuePushNow(ctx)
+        FamilySyncScheduler.enqueuePushNow(ctx)
+        FamilyMemberSyncScheduler.enqueuePushNow(ctx)
         AssessmentQuestionSyncScheduler.enqueuePushNow(ctx)
         AssessmentAnswerSyncScheduler.enqueuePullNow(ctx)
         CleanerScheduler.enqueueNow(ctx, retentionDays = cleanerRetentionDays)
@@ -76,6 +86,8 @@ object SyncCoordinatorScheduler {
         AttendanceSyncScheduler.enqueuePullNow(ctx)
 
         EventSyncScheduler.enqueuePullNow(ctx)
+        FamilySyncScheduler.enqueuePushNow(ctx)
+        FamilyMemberSyncScheduler.enqueuePushNow(ctx)
         AssessmentQuestionSyncScheduler.enqueuePullNow(ctx)
         AssessmentAnswerSyncScheduler.enqueuePullNow(ctx)
         CleanerScheduler.enqueueNow(ctx, retentionDays = cleanerRetentionDays)

@@ -81,8 +81,18 @@ fun RegisterDashBoardScreen(
                 // KPI rows
                 item {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        StatCard("View Children", ui.childrenTotal.toString(), Modifier.weight(1f), onClick = toChildrenDashboard)
-                        StatCard("View Families", "", Modifier.weight(1f), onClick = toFamilyDashboard)
+                        StatCard(
+                            "View Children",
+                            ui.childrenTotal.toString(),
+                            Modifier.weight(1f),
+                            onClick = toChildrenDashboard
+                        )
+                        StatCard(
+                            "View Families",
+                            ui.familiesTotal.toString(),
+                            Modifier.weight(1f),
+                            onClick = toFamilyDashboard
+                        )
                     }
                 }
 

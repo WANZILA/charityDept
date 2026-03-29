@@ -36,6 +36,7 @@ import com.example.charityDept.presentation.screens.events.*
 import com.example.charityDept.presentation.screens.reports.ReportScreen
 import com.example.charityDept.presentation.screens.splash.SplashScreen
 import com.example.charityDept.presentation.screens.admin.streets.StreetsScreen
+import com.example.charityDept.presentation.screens.families.FamilyDashboardScreen
 import com.example.charityDept.presentation.screens.families.FamilyDetailsScreen
 import com.example.charityDept.presentation.screens.families.FamilyFormScreen
 import com.example.charityDept.presentation.screens.families.FamilyListScreen
@@ -271,6 +272,12 @@ fun CharityDeptNavHost(
                                     popUpTo(Screen.HomeDashboard.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
+                            },
+                            toFamilyDashboard = {
+                                navController.navigate(Screen.FamilyDashboard.route) {
+                                    popUpTo(Screen.HomeDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             }
                         )
                     }
@@ -293,6 +300,20 @@ fun CharityDeptNavHost(
 
 
 
+                        )
+                    }
+
+
+
+                    /** Familu Dashboard */
+                    composable(Screen.FamilyDashboard.route) {
+                        FamilyDashboardScreen(
+                            toFamiliesList = {
+                                navController.navigate(Screen.FamiliesList.route) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            navigateUp = { navController.navigateUp() }
                         )
                     }
 

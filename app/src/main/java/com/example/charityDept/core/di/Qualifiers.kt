@@ -54,6 +54,14 @@ annotation class AssessmentQuestionsRef
 @Retention(AnnotationRetention.BINARY)
 annotation class AssessmentAnswersRef
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class FamilyRef
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class FamilyMembersRef
+
 
 
 

@@ -149,6 +149,18 @@ object FirestoreModule {
     @AssessmentAnswersRef // ✅ CHANGED (was @AssessmentQuestionsRef)
     fun provideAssessmentAnswersRef(firestore: FirebaseFirestore): CollectionReference =
         firestore.collection("assessment_answers")
+
+    @Provides
+    @Singleton
+    @FamilyRef
+    fun provideFamiliesCollection(db: FirebaseFirestore): CollectionReference =
+        db.collection("families")
+
+    @Provides
+    @Singleton
+    @FamilyMembersRef
+    fun provideFamilyMembersCollection(db: FirebaseFirestore): CollectionReference =
+        db.collection("family_members")
 //    @Provides
 //    @Singleton
 //    @AssessmentQuestionsRef

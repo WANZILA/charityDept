@@ -6,6 +6,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.example.charityDept.data.model.Family
 import com.example.charityDept.data.model.FamilyMember
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -71,6 +72,34 @@ interface FamilyDao {
     suspend fun upsertFamilyMembers(items: List<FamilyMember>)
 
     @Query("""
+        SELECT * FROM families
+        WHERE isDirty = 1
+        ORDER BY updatedAt ASC
+        LIMIT :limit
+    """)
+    suspend fun loadDirtyFamilyBatch(limit: Int): List<Family>
+
+    @Query("""
+        SELECT * FROM families
+        WHERE familyId IN (:ids)
+    """)
+    suspend fun getFamiliesByIds(ids: List<String>): List<Family>
+
+    @Upsert
+    suspend fun upsertAllFamilies(items: List<Family>)
+
+    @Query("""
+        UPDATE families
+        SET isDirty = 0,
+            updatedAt = :newUpdatedAt,
+            version = version + 1
+        WHERE familyId IN (:ids)
+    """)
+    suspend fun markFamilyBatchPushed(
+        ids: List<String>,
+        newUpdatedAt: Timestamp
+    )
+    @Query("""
         UPDATE families
         SET isDeleted = 1,
             isDirty = 1,
@@ -108,4 +137,66 @@ interface FamilyDao {
         softDeleteFamily(familyId, now)
         softDeleteMembersByFamilyId(familyId, now)
     }
+
+    @Query("""
+        SELECT * FROM family_members
+        WHERE isDirty = 1
+        ORDER BY updatedAt ASC
+        LIMIT :limit
+    """)
+    suspend fun loadDirtyFamilyMemberBatch(limit: Int): List<FamilyMember>
+
+    @Query("""
+        SELECT * FROM family_members
+        WHERE familyMemberId IN (:ids)
+    """)
+    suspend fun getFamilyMembersByIds(ids: List<String>): List<FamilyMember>
+
+    @Upsert
+    suspend fun upsertAllFamilyMembers(items: List<FamilyMember>)
+
+    @Query("""
+        UPDATE family_members
+        SET isDirty = 0,
+            updatedAt = :newUpdatedAt,
+            version = version + 1
+        WHERE familyMemberId IN (:ids)
+    """)
+    suspend fun markFamilyMemberBatchPushed(
+        ids: List<String>,
+        newUpdatedAt: Timestamp
+    )
+
+
+    @Query("""
+        SELECT COUNT(*) FROM families
+        WHERE isDeleted = 0
+          AND TRIM(primaryContactHeadOfHousehold) = ''
+    """)
+    fun observeFamiliesMissingHeadCount(): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(*) FROM families
+        WHERE isDeleted = 0
+          AND familyId NOT IN (
+              SELECT DISTINCT familyId
+              FROM family_members
+              WHERE isDeleted = 0
+          )
+    """)
+    fun observeFamiliesWithNoMembersCount(): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(*) FROM family_members
+        WHERE isDeleted = 0
+          AND TRIM(ninNumber) = ''
+    """)
+    fun observeFamilyMembersMissingNinCount(): Flow<Int>
+
+    @Query("""
+        SELECT COUNT(*) FROM families
+        WHERE isDeleted = 0
+          AND createdAt >= :since
+    """)
+    fun observeRecentFamiliesCount(since: Timestamp): Flow<Int>
 }
