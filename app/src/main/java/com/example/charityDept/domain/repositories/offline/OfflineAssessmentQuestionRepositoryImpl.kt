@@ -7,6 +7,31 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import java.util.UUID
 
+
+private fun normalizeAssessmentKey(raw: String): String {
+    return raw
+        .trim()
+        .uppercase()
+        .replace("&", "_&_")
+        .replace(Regex("[^A-Z0-9&_]+"), "_")
+        .replace(Regex("_+"), "_")
+        .trim('_')
+}
+
+private fun assessmentPrefixFor(assessmentKey: String): String {
+    val parts = assessmentKey
+        .trim()
+        .uppercase()
+        .split("_")
+        .filter { it.isNotBlank() }
+
+    return when {
+        parts.size >= 2 -> parts.joinToString("") { it.first().toString() }
+        parts.size == 1 -> parts.first().take(2)
+        else -> ""
+    }
+}
+
 @Singleton
 class OfflineAssessmentQuestionRepositoryImpl @Inject constructor(
     private val dao: AssessmentQuestionDao
@@ -26,7 +51,7 @@ class OfflineAssessmentQuestionRepositoryImpl @Inject constructor(
         dao.upsertAll(
             rows.map { row ->
                 row.copy(
-                    assessmentLabel = newAssessmentLabel,
+                    assessmentLabel = newAssessmentLabel.trim().uppercase(),
                     updatedAt = now,
                     isDirty = true,
                     version = row.version + 1L
@@ -100,5 +125,6 @@ class OfflineAssessmentQuestionRepositoryImpl @Inject constructor(
     override suspend fun hardDeleteOldTombstones(cutoff: Timestamp): Int {
         return dao.hardDeleteOldTombstones(cutoff)
     }
+
 }
 

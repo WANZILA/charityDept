@@ -112,6 +112,11 @@ fun TaxonomyBankScreen(
                 )
             )
 
+    val effectiveSelectedAssessmentLabel =
+        assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
+            ?.assessmentLabel
+            ?: selectedAssessmentLabel
+
 //    val selectedAssessmentLabel =
 //        assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
 //            ?.assessmentLabel
@@ -184,20 +189,29 @@ fun TaxonomyBankScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    val effectiveSelectedAssessmentLabel =
-                        assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
-                            ?.assessmentLabel
-                            ?: selectedAssessmentLabel
-                            ?: "Taxonomy Bank"
-
                     Text(
                         if (selectedAssessmentKey == null) {
                             "Taxonomy Bank"
                         } else {
-                            effectiveSelectedAssessmentLabel
+                            effectiveSelectedAssessmentLabel ?: "Taxonomy Bank"
                         }
                     )
                 },
+//                title = {
+//                    val effectiveSelectedAssessmentLabel =
+//                        assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
+//                            ?.assessmentLabel
+//                            ?: selectedAssessmentLabel
+//                            ?: "Taxonomy Bank"
+//
+//                    Text(
+//                        if (selectedAssessmentKey == null) {
+//                            "Taxonomy Bank"
+//                        } else {
+//                            effectiveSelectedAssessmentLabel
+//                        }
+//                    )
+//                },
                 navigationIcon = {
                     IconButton(
                         onClick = {
@@ -214,7 +228,7 @@ fun TaxonomyBankScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            onAddClick(selectedAssessmentKey, selectedAssessmentLabel)
+                            onAddClick(selectedAssessmentKey, effectiveSelectedAssessmentLabel)
                         }
                     ) {
                         Icon(Icons.Outlined.Add, contentDescription = "Add")

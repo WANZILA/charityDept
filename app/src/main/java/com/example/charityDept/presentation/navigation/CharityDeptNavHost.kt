@@ -701,52 +701,7 @@ fun CharityDeptNavHost(
                         }
                     }
 
-                    composable(
-                        route = Screen.TaxonomyBank.route,
-                        arguments = listOf(
-                            navArgument("selectedAssessmentKey") {
-                                type = NavType.StringType
-                                defaultValue = ""
-                                nullable = true
-                            },
-                            navArgument("selectedAssessmentLabel") {
-                                type = NavType.StringType
-                                defaultValue = ""
-                                nullable = true
-                            }
-                        )
-                    ) { backStackEntry ->
-                        if (canManageQuestions) {
-                            val selectedAssessmentKey =
-                                backStackEntry.arguments?.getString("selectedAssessmentKey").orEmpty()
-                            val selectedAssessmentLabel =
-                                backStackEntry.arguments?.getString("selectedAssessmentLabel").orEmpty()
 
-                            TaxonomyBankScreen(
-                                initialSelectedAssessmentKey = selectedAssessmentKey.ifBlank { null },
-                                initialSelectedAssessmentLabel = selectedAssessmentLabel.ifBlank { null },
-                                navigateUp = {
-                                    navController.navigate(Screen.AdminDashboard.route) {
-                                        popUpTo(Screen.TaxonomyBank.route) { inclusive = true }
-                                        launchSingleTop = true
-                                    }
-                                },
-                                onAddClick = { assessmentKey, assessmentLabel ->
-                                    navController.navigate(
-                                        Screen.TaxonomyForm.newTaxonomy(
-                                            initialAssessmentKey = assessmentKey,
-                                            initialAssessmentLabel = assessmentLabel
-                                        )
-                                    )
-                                },
-                                onEditClick = { taxonomyId ->
-                                    navController.navigate(Screen.TaxonomyForm.edit(taxonomyId))
-                                }
-                            )
-                        } else {
-                            LaunchedEffect(Unit) { navController.popBackStack() }
-                        }
-                    }
 
                     composable(
                         route = Screen.TaxonomyForm.route,
@@ -838,6 +793,55 @@ fun CharityDeptNavHost(
                     }
 
                     composable(
+                        route = Screen.TaxonomyBank.route,
+                        arguments = listOf(
+                            navArgument("selectedAssessmentKey") {
+                                type = NavType.StringType
+                                defaultValue = ""
+                                nullable = true
+                            },
+                            navArgument("selectedAssessmentLabel") {
+                                type = NavType.StringType
+                                defaultValue = ""
+                                nullable = true
+                            }
+                        )
+                    ) { backStackEntry ->
+                        if (canManageQuestions) {
+                            val selectedAssessmentKey =
+                                backStackEntry.arguments?.getString("selectedAssessmentKey").orEmpty()
+                            val selectedAssessmentLabel =
+                                backStackEntry.arguments?.getString("selectedAssessmentLabel").orEmpty()
+
+                            TaxonomyBankScreen(
+                                initialSelectedAssessmentKey = selectedAssessmentKey.ifBlank { null },
+                                initialSelectedAssessmentLabel = selectedAssessmentLabel.ifBlank { null },
+                                navigateUp = {
+                                    navController.navigate(Screen.AdminDashboard.route) {
+                                        popUpTo(Screen.TaxonomyBank.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                onAddClick = { assessmentKey, assessmentLabel ->
+                                    navController.navigate(
+                                        Screen.TaxonomyForm.newTaxonomy(
+                                            initialAssessmentKey = assessmentKey,
+                                            initialAssessmentLabel = assessmentLabel
+                                        )
+                                    )
+                                },
+                                onEditClick = { taxonomyId ->
+                                    navController.navigate(
+                                        Screen.TaxonomyForm.edit(taxonomyId)
+                                    )
+                                }
+                            )
+                        } else {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        }
+                    }
+
+                    composable(
                         route = "question_form?initialAssessmentKey={initialAssessmentKey}&initialAssessmentLabel={initialAssessmentLabel}",
                         arguments = listOf(
                             navArgument("initialAssessmentKey") {
@@ -875,10 +879,12 @@ fun CharityDeptNavHost(
                         }
                     }
 
+
+
                     composable(
-                        route = Screen.QuestionForm.route,
+                        route = Screen.TaxonomyForm.route,
                         arguments = listOf(
-                            navArgument("questionId") {
+                            navArgument("taxonomyId") {
                                 type = NavType.StringType
                                 nullable = true
                                 defaultValue = null
@@ -896,15 +902,33 @@ fun CharityDeptNavHost(
                         )
                     ) { backStackEntry ->
                         if (canManageQuestions) {
-                            val qid = backStackEntry.arguments?.getString("questionId")
-                            QuestionFormScreen(
-                                questionIdArg = qid,
-                                initialAssessmentKeyArg = backStackEntry.arguments?.getString("initialAssessmentKey"),
-                                initialAssessmentLabelArg = backStackEntry.arguments?.getString("initialAssessmentLabel"),
-                                navigateUp = { navController.navigate(Screen.QuestionBank.route) },
+                            val taxonomyId = backStackEntry.arguments?.getString("taxonomyId")
+                            val initialAssessmentKey = backStackEntry.arguments?.getString("initialAssessmentKey")
+                            val initialAssessmentLabel = backStackEntry.arguments?.getString("initialAssessmentLabel")
+
+                            TaxonomyFormScreen(
+                                taxonomyIdArg = taxonomyId,
+                                initialAssessmentKeyArg = initialAssessmentKey,
+                                initialAssessmentLabelArg = initialAssessmentLabel,
+                                navigateUp = {
+                                    navController.navigate(
+                                        Screen.TaxonomyBank.createRoute(
+                                            selectedAssessmentKey = initialAssessmentKey,
+                                            selectedAssessmentLabel = initialAssessmentLabel
+                                        )
+                                    ) {
+                                        popUpTo("taxonomy_form") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
                                 onDone = {
-                                    navController.navigate(Screen.QuestionBank.route) {
-                                        popUpTo(Screen.QuestionForm.route) { inclusive = true }
+                                    navController.navigate(
+                                        Screen.TaxonomyBank.createRoute(
+                                            selectedAssessmentKey = initialAssessmentKey,
+                                            selectedAssessmentLabel = initialAssessmentLabel
+                                        )
+                                    ) {
+                                        popUpTo("taxonomy_form") { inclusive = true }
                                         launchSingleTop = true
                                     }
                                 }

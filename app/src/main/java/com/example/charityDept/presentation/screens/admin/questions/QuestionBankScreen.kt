@@ -38,6 +38,10 @@ private data class QuestionAssessmentRow(
     val assessmentLabel: String
 )
 
+private fun cleanAssessmentLabel(value: String): String {
+    return value.trim().replace("+", " ")
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuestionBankScreen(
@@ -58,11 +62,13 @@ fun QuestionBankScreen(
                 } else {
                     QuestionAssessmentRow(
                         assessmentKey = assessmentKey,
-                        assessmentLabel = rows.firstOrNull { it.assessmentLabel.isNotBlank() }
-                            ?.assessmentLabel
-                            ?.trim()
-                            .orEmpty()
-                            .ifBlank { assessmentKey }
+                        assessmentLabel = cleanAssessmentLabel(
+                            rows.firstOrNull { it.assessmentLabel.isNotBlank() }
+                                ?.assessmentLabel
+                                ?.trim()
+                                .orEmpty()
+                                .ifBlank { assessmentKey }
+                        )
                     )
                 }
             }
@@ -89,7 +95,7 @@ fun QuestionBankScreen(
     val selectedAssessmentLabel =
         assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
             ?.assessmentLabel
-            ?: selectedAssessmentKey.orEmpty()
+            ?: cleanAssessmentLabel(selectedAssessmentKey.orEmpty())
 
     Scaffold(
         topBar = {
@@ -122,8 +128,9 @@ fun QuestionBankScreen(
                             val selectedLabel =
                                 assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
                                     ?.assessmentLabel
+                                    ?.let(::cleanAssessmentLabel)
                             onAdd(selectedAssessmentKey, selectedLabel)
-                        }
+                               }
                     ) {
                         Icon(Icons.Outlined.Add, contentDescription = "Add")
                     }

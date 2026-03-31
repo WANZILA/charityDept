@@ -120,6 +120,10 @@ fun TaxonomyFormScreen(
         taxonomyIdArg == null && !initialAssessmentKeyArg.isNullOrBlank()
     }
 
+    val isAssessmentLabelReadOnly = remember(taxonomyIdArg, lockedToInitialAssessment) {
+        taxonomyIdArg != null || lockedToInitialAssessment
+    }
+
     val assessmentKey = remember(
         taxonomyIdArg,
         initialAssessmentKeyArg,
@@ -279,7 +283,7 @@ fun TaxonomyFormScreen(
             OutlinedTextField(
                 value = assessmentLabel,
                 onValueChange = { assessmentLabel = it.uppercase() },
-                readOnly = lockedToInitialAssessment,
+                readOnly = isAssessmentLabelReadOnly,
                 label = { Text("Assessment Label") },
                 modifier = Modifier.fillMaxWidth()
             )
