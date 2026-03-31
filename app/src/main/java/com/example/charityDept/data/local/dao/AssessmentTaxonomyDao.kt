@@ -51,6 +51,14 @@ interface AssessmentTaxonomyDao {
     suspend fun getOnce(taxonomyId: String): AssessmentTaxonomy?
 
     @Query("""
+    SELECT * FROM assessment_taxonomy
+    WHERE assessmentKey = :assessmentKey
+      AND isDeleted = 0
+    ORDER BY updatedAt ASC
+""")
+    suspend fun getActiveByAssessmentKey(assessmentKey: String): List<AssessmentTaxonomy>
+
+    @Query("""
         SELECT * FROM assessment_taxonomy
         WHERE isDirty = 1
         ORDER BY updatedAt ASC

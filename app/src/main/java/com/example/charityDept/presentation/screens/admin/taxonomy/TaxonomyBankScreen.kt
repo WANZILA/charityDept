@@ -32,22 +32,48 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.charityDept.data.model.AssessmentTaxonomy
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.navigation.NavController
+
 
 private data class AssessmentBankRow(
     val assessmentKey: String,
     val assessmentLabel: String
 )
+private fun sanitizeRouteValue(value: String?): String? {
+    val cleaned = value?.trim().orEmpty()
+    if (cleaned.isBlank()) return null
+    if (cleaned.contains("{") || cleaned.contains("}")) return null
+    return cleaned
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaxonomyBankScreen(
+    initialSelectedAssessmentKey: String? = null,
+    initialSelectedAssessmentLabel: String? = null,
     navigateUp: () -> Unit,
-    onAdd: (assessmentKey: String?, assessmentLabel: String?) -> Unit,
-    onEdit: (taxonomyId: String) -> Unit,
+    onAddClick: (String?, String?) -> Unit,
+    onEditClick: (String) -> Unit,
     vm: AssessmentTaxonomyAdminViewModel = hiltViewModel()
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
-    var selectedAssessmentKey by remember { mutableStateOf<String?>(null) }
+
+    var selectedAssessmentKey by remember {
+        mutableStateOf(sanitizeRouteValue(initialSelectedAssessmentKey))
+    }
+    var selectedAssessmentLabel by remember {
+        mutableStateOf(sanitizeRouteValue(initialSelectedAssessmentLabel))
+    }
+
+    var editAssessment by remember { mutableStateOf<AssessmentBankRow?>(null) }
+    var deleteAssessment by remember { mutableStateOf<AssessmentBankRow?>(null) }
+    var editAssessmentLabel by remember { mutableStateOf("") }
 
     val assessmentRows =
         ui.items
@@ -86,20 +112,89 @@ fun TaxonomyBankScreen(
                 )
             )
 
-    val selectedAssessmentLabel =
-        assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
-            ?.assessmentLabel
-            ?: selectedAssessmentKey.orEmpty()
+//    val selectedAssessmentLabel =
+//        assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
+//            ?.assessmentLabel
+//            ?: selectedAssessmentKey.orEmpty()
+
+    if (editAssessment != null) {
+        AlertDialog(
+            onDismissRequest = { editAssessment = null },
+            title = { Text("Edit Assessment Label") },
+            text = {
+                OutlinedTextField(
+                    value = editAssessmentLabel,
+                    onValueChange = { editAssessmentLabel = it.replace("+", "").uppercase() },
+                    label = { Text("Assessment Label") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val item = editAssessment ?: return@TextButton
+                        val nextLabel = editAssessmentLabel.trim().replace("+", "").uppercase()
+                        if (nextLabel.isNotBlank()) {
+                            vm.renameAssessmentLabel(item.assessmentKey, nextLabel)
+                        }
+                        editAssessment = null
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editAssessment = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (deleteAssessment != null) {
+        AlertDialog(
+            onDismissRequest = { deleteAssessment = null },
+            title = { Text("Delete Assessment?") },
+            text = {
+                Text("This will soft-delete all taxonomy rows and questions under this assessment.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val item = deleteAssessment ?: return@TextButton
+                        vm.deleteAssessment(item.assessmentKey)
+                        if (selectedAssessmentKey == item.assessmentKey) {
+                            selectedAssessmentKey = null
+                        }
+                        deleteAssessment = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteAssessment = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
+                    val effectiveSelectedAssessmentLabel =
+                        assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
+                            ?.assessmentLabel
+                            ?: selectedAssessmentLabel
+                            ?: "Taxonomy Bank"
+
                     Text(
                         if (selectedAssessmentKey == null) {
                             "Taxonomy Bank"
                         } else {
-                            selectedAssessmentLabel
+                            effectiveSelectedAssessmentLabel
                         }
                     )
                 },
@@ -119,11 +214,7 @@ fun TaxonomyBankScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            val selectedLabel =
-                                assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
-                                    ?.assessmentLabel
-
-                            onAdd(selectedAssessmentKey, selectedLabel)
+                            onAddClick(selectedAssessmentKey, selectedAssessmentLabel)
                         }
                     ) {
                         Icon(Icons.Outlined.Add, contentDescription = "Add")
@@ -143,9 +234,9 @@ fun TaxonomyBankScreen(
                 Spacer(Modifier.height(12.dp))
             }
 
-            if (ui.items.isEmpty()) {
-                Text("No taxonomy rows yet. Tap + to add one.")
-                return@Column
+            if (selectedItems.isEmpty()) {
+                selectedAssessmentKey = null
+                selectedAssessmentLabel = null
             }
 
             if (selectedAssessmentKey == null) {
@@ -159,18 +250,49 @@ fun TaxonomyBankScreen(
                         ElevatedCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { selectedAssessmentKey = item.assessmentKey }
+                                .clickable {
+                                    selectedAssessmentKey = item.assessmentKey
+                                    selectedAssessmentLabel = item.assessmentLabel
+                                }
                         ) {
-                            Column(Modifier.padding(14.dp)) {
-                                Text(
-                                    item.assessmentLabel,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Spacer(Modifier.height(6.dp))
-                                Text(
-                                    item.assessmentKey,
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(
+                                        item.assessmentLabel,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Spacer(Modifier.height(6.dp))
+                                    Text(
+                                        item.assessmentKey,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+
+                                Row {
+                                    IconButton(
+                                        onClick = {
+                                            editAssessment = item
+                                            editAssessmentLabel = item.assessmentLabel.replace("+", "").uppercase()
+                                        }
+                                    ) {
+                                        Icon(Icons.Outlined.Edit, contentDescription = "Edit Assessment")
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            deleteAssessment = item
+                                        }
+                                    ) {
+                                        Icon(Icons.Outlined.Delete, contentDescription = "Delete Assessment")
+                                    }
+                                }
                             }
                         }
                     }
@@ -186,7 +308,8 @@ fun TaxonomyBankScreen(
                         ElevatedCard(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onEdit(item.taxonomyId) }
+                                .clickable { onEditClick(item.taxonomyId) }
+//                                .clickable { onEdit(item.taxonomyId) }
                         ) {
                             Column(Modifier.padding(14.dp)) {
                                 Text(

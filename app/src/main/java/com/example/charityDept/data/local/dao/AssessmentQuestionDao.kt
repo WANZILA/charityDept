@@ -83,6 +83,14 @@ interface AssessmentQuestionDao {
     suspend fun getOnce(questionId: String): AssessmentQuestion?
 
     @Query("""
+    SELECT * FROM assessment_questions
+    WHERE assessmentKey = :assessmentKey
+      AND isDeleted = 0
+    ORDER BY updatedAt ASC
+""")
+    suspend fun getActiveByAssessmentKey(assessmentKey: String): List<AssessmentQuestion>
+
+    @Query("""
         UPDATE assessment_questions
         SET isDeleted = 1,
             deletedAt = :nowNanos,

@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 interface OfflineAssessmentQuestionRepository {
     fun observeAdminAll(): Flow<List<AssessmentQuestion>>
     suspend fun getOnce(questionId: String): AssessmentQuestion?
+
+    suspend fun renameAssessmentLabel(assessmentKey: String, newAssessmentLabel: String)
+    suspend fun softDeleteAssessment(assessmentKey: String)
     suspend fun upsertWithAudit(draft: AssessmentQuestion): String
 
     // ✅ soft delete

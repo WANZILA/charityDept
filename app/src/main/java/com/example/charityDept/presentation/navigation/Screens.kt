@@ -204,7 +204,16 @@ sealed class Screen(val route: String) {
         private fun enc(value: String): String =
             URLEncoder.encode(value, StandardCharsets.UTF_8.toString())
     }
-    object TaxonomyBank : Screen("taxonomy_bank")
+    object TaxonomyBank : Screen("taxonomy_bank?selectedAssessmentKey={selectedAssessmentKey}&selectedAssessmentLabel={selectedAssessmentLabel}") {
+        fun createRoute(
+            selectedAssessmentKey: String? = null,
+            selectedAssessmentLabel: String? = null
+        ): String {
+            val key = selectedAssessmentKey ?: ""
+            val label = selectedAssessmentLabel ?: ""
+            return "taxonomy_bank?selectedAssessmentKey=$key&selectedAssessmentLabel=$label"
+        }
+    }
 
     object TaxonomyForm : Screen(
         "taxonomy_form" +
@@ -213,6 +222,7 @@ sealed class Screen(val route: String) {
                 "&initialAssessmentLabel={initialAssessmentLabel}"
     ) {
         fun newTaxonomy(
+            taxonomyId: String? = null,
             initialAssessmentKey: String? = null,
             initialAssessmentLabel: String? = null
         ): String {

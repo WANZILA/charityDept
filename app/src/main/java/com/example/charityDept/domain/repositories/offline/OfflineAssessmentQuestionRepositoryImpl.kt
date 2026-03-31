@@ -17,6 +17,43 @@ class OfflineAssessmentQuestionRepositoryImpl @Inject constructor(
     override suspend fun getOnce(questionId: String): AssessmentQuestion? =
         dao.getOnce(questionId)
 
+    override suspend fun renameAssessmentLabel(assessmentKey: String, newAssessmentLabel: String) {
+        val rows = dao.getActiveByAssessmentKey(assessmentKey)
+        if (rows.isEmpty()) return
+
+        val now = Timestamp.now()
+
+        dao.upsertAll(
+            rows.map { row ->
+                row.copy(
+                    assessmentLabel = newAssessmentLabel,
+                    updatedAt = now,
+                    isDirty = true,
+                    version = row.version + 1L
+                )
+            }
+        )
+    }
+
+    override suspend fun softDeleteAssessment(assessmentKey: String) {
+        val rows = dao.getActiveByAssessmentKey(assessmentKey)
+        if (rows.isEmpty()) return
+
+        val now = Timestamp.now()
+
+        dao.upsertAll(
+            rows.map { row ->
+                row.copy(
+                    updatedAt = now,
+                    isDirty = true,
+                    isDeleted = true,
+                    deletedAt = now,
+                    version = row.version + 1L
+                )
+            }
+        )
+    }
+
     override suspend fun upsertWithAudit(draft: AssessmentQuestion): String {
         val now = Timestamp.now()
 

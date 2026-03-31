@@ -111,12 +111,26 @@ fun TaxonomyFormScreen(
     LaunchedEffect(taxonomyIdArg, initialAssessmentKeyArg, initialAssessmentLabelArg) {
         if (taxonomyIdArg == null) {
             if (!initialAssessmentLabelArg.isNullOrBlank() && assessmentLabel.isBlank()) {
-                assessmentLabel = initialAssessmentLabelArg
+                assessmentLabel = initialAssessmentLabelArg.replace("+", "").uppercase()
             }
         }
     }
-    val assessmentKey = remember(assessmentLabel) {
-        normalizeKey(assessmentLabel)
+
+    val lockedToInitialAssessment = remember(taxonomyIdArg, initialAssessmentKeyArg) {
+        taxonomyIdArg == null && !initialAssessmentKeyArg.isNullOrBlank()
+    }
+
+    val assessmentKey = remember(
+        taxonomyIdArg,
+        initialAssessmentKeyArg,
+        assessmentLabel,
+        lockedToInitialAssessment
+    ) {
+        if (lockedToInitialAssessment) {
+            initialAssessmentKeyArg!!.trim()
+        } else {
+            normalizeKey(assessmentLabel)
+        }
     }
 
     val categoryKey = remember(splitKey) {
@@ -131,6 +145,16 @@ fun TaxonomyFormScreen(
         val prefix = assessmentPrefixFor(assessmentKey)
         val sub = normalizeKey(subCategoryLabel)
         listOf(prefix, categoryKey, sub)
+            .filter { it.isNotBlank() }
+            .joinToString("_")
+    }
+
+    val generatedTaxonomyId = remember(assessmentKey, categoryKey, subCategoryLabel) {
+        listOf(
+            assessmentKey.trim().uppercase(),
+            categoryKey.trim().uppercase(),
+            normalizeKey(subCategoryLabel)
+        )
             .filter { it.isNotBlank() }
             .joinToString("_")
     }
@@ -206,7 +230,8 @@ fun TaxonomyFormScreen(
                         onClick = {
                             scope.launch {
                                 val draft = AssessmentTaxonomy(
-                                    taxonomyId = taxonomyIdArg ?: "",
+//                                    taxonomyId = taxonomyIdArg ?: "",
+                                    taxonomyId = taxonomyIdArg ?: generatedTaxonomyId,
                                     assessmentKey = assessmentKey,
                                     assessmentLabel = assessmentLabel.trim(),
                                     categoryKey = categoryKey,
@@ -244,9 +269,17 @@ fun TaxonomyFormScreen(
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             }
 
+//            OutlinedTextField(
+//                value = assessmentLabel,
+//                onValueChange = { assessmentLabel = it },
+//                label = { Text("Assessment Label") },
+//                modifier = Modifier.fillMaxWidth()
+//            )
+
             OutlinedTextField(
                 value = assessmentLabel,
-                onValueChange = { assessmentLabel = it },
+                onValueChange = { assessmentLabel = it.uppercase() },
+                readOnly = lockedToInitialAssessment,
                 label = { Text("Assessment Label") },
                 modifier = Modifier.fillMaxWidth()
             )

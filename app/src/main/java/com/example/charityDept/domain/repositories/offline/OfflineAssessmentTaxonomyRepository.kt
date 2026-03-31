@@ -7,6 +7,10 @@ import kotlinx.coroutines.flow.Flow
 interface OfflineAssessmentTaxonomyRepository {
     fun observeAdminAll(): Flow<List<AssessmentTaxonomy>>
     suspend fun getOnce(taxonomyId: String): AssessmentTaxonomy?
+
+    suspend fun renameAssessmentLabel(assessmentKey: String, newAssessmentLabel: String)
+    suspend fun softDeleteAssessment(assessmentKey: String)
+
     suspend fun upsertWithAudit(draft: AssessmentTaxonomy): String
     suspend fun softDelete(taxonomyId: String)
     suspend fun hardDeleteIfDeleted(taxonomyId: String)

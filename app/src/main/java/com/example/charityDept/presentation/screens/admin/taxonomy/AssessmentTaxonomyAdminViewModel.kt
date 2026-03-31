@@ -3,6 +3,7 @@ package com.example.charityDept.presentation.screens.admin.taxonomy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.charityDept.data.model.AssessmentTaxonomy
+import com.example.charityDept.domain.repositories.offline.OfflineAssessmentQuestionRepository
 import com.example.charityDept.domain.repositories.offline.OfflineAssessmentTaxonomyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -19,7 +20,8 @@ data class TaxonomyBankUiState(
 
 @HiltViewModel
 class AssessmentTaxonomyAdminViewModel @Inject constructor(
-    private val repo: OfflineAssessmentTaxonomyRepository
+    private val repo: OfflineAssessmentTaxonomyRepository,
+    private val questionRepo: OfflineAssessmentQuestionRepository
 ) : ViewModel() {
 
     val ui: StateFlow<TaxonomyBankUiState> =
@@ -33,6 +35,16 @@ class AssessmentTaxonomyAdminViewModel @Inject constructor(
 
     fun delete(taxonomyId: String) = viewModelScope.launch {
         repo.softDelete(taxonomyId)
+    }
+
+    fun renameAssessmentLabel(assessmentKey: String, newAssessmentLabel: String) = viewModelScope.launch {
+        repo.renameAssessmentLabel(assessmentKey, newAssessmentLabel)
+        questionRepo.renameAssessmentLabel(assessmentKey, newAssessmentLabel)
+    }
+
+    fun deleteAssessment(assessmentKey: String) = viewModelScope.launch {
+        repo.softDeleteAssessment(assessmentKey)
+        questionRepo.softDeleteAssessment(assessmentKey)
     }
 
     fun upsert(draft: AssessmentTaxonomy, onDone: (id: String) -> Unit) = viewModelScope.launch {
