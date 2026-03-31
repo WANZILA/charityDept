@@ -124,7 +124,6 @@ interface AssessmentQuestionDao {
 """)
     suspend fun markBatchPushed(ids: List<String>, newUpdatedAt: Timestamp)
 
-
     @Query("""
     SELECT
       assessmentKey AS assessmentKey,
@@ -135,9 +134,12 @@ interface AssessmentQuestionDao {
       AND (
           :mode = 'ALL'
           OR categoryKey = :mode
+          OR (:mode = 'QA' AND LOWER(TRIM(category)) IN ('question', 'questions', 'q&a', 'qa'))
+          OR (:mode = 'OBS' AND LOWER(TRIM(category)) IN ('observation', 'observations', 'obs'))
       )
     GROUP BY assessmentKey
     ORDER BY COALESCE(MIN(NULLIF(assessmentLabel, '')), assessmentKey) ASC
 """)
     fun observeAvailableAssessmentTools(mode: String): Flow<List<AssessmentToolOption>>
+
 }

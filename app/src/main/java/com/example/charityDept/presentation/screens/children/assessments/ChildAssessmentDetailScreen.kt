@@ -1,14 +1,44 @@
 package com.example.charityDept.presentation.screens.children.assessments
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,10 +67,21 @@ fun ChildAssessmentDetailScreen(
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    val label = when (mode) {
+    val isObservationMode = mode == "OBS"
+
+    val screenTitle = when (mode) {
         "QA" -> "Q&A Session"
-        "OBS" -> "Observations Session"
+        "OBS" -> "Observation Session"
         else -> "Assessment Session"
+    }
+
+    val primaryInputLabel = if (isObservationMode) "Observation" else "Answer"
+    val recommendationLabel = if (isObservationMode) "Action / Follow-up" else "Recommendation"
+    val notesLabel = if (isObservationMode) "Observation Notes" else "Notes"
+    val emptyStateText = if (isObservationMode) {
+        "No observation items found for this session yet."
+    } else {
+        "No question items found for this session yet."
     }
 
     val sessionFlow = remember(childId, generalId, mode, assessmentKey) {
@@ -75,21 +116,30 @@ fun ChildAssessmentDetailScreen(
     fun buildSaveList(): List<AssessmentAnswer> {
         return ui.items.map { base ->
             val d = drafts[base.answerId]
-            if (d == null) base
-            else base.copy(
-                answer = d.answer,
-                recommendation = d.recommendation,
-                notes = d.notes,
-                score = d.score
-            )
+            if (d == null) {
+                if (isObservationMode) base.copy(score = 0) else base
+            } else {
+                base.copy(
+                    answer = d.answer,
+                    recommendation = d.recommendation,
+                    notes = d.notes,
+                    score = if (isObservationMode) 0 else d.score
+                )
+            }
         }
     }
 
     if (deleteTarget != null) {
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
-            title = { Text("Delete item?") },
-            text = { Text("This will remove it from this session (soft delete).") },
+            title = {
+                Text(
+                    if (isObservationMode) "Delete observation?" else "Delete answer?"
+                )
+            },
+            text = {
+                Text("This will remove it from this session (soft delete).")
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -97,7 +147,12 @@ fun ChildAssessmentDetailScreen(
                         deleteTarget = null
                         if (target != null) {
                             vm.softDeleteAnswer(target.answerId)
-                            scope.launch { snack.showSnackbar("Deleted (soft).") }
+                            scope.launch {
+                                snack.showSnackbar(
+                                    if (isObservationMode) "Observation deleted (soft)."
+                                    else "Answer deleted (soft)."
+                                )
+                            }
                         }
                     }
                 ) { Text("Delete") }
@@ -112,7 +167,7 @@ fun ChildAssessmentDetailScreen(
         snackbarHost = { SnackbarHost(snack) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(label) },
+                title = { Text(screenTitle) },
                 navigationIcon = {
                     IconButton(onClick = navigateUp) {
                         Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
@@ -125,7 +180,9 @@ fun ChildAssessmentDetailScreen(
                 onClick = {
                     val toSave = buildSaveList()
                     vm.saveAllLocally(toSave)
-                    scope.launch { snack.showSnackbar("Saved locally (Room).") }
+                    scope.launch {
+                        snack.showSnackbar("Saved locally (Room).")
+                    }
                 }
             ) {
                 Icon(Icons.Outlined.Save, contentDescription = "Save")
@@ -148,7 +205,7 @@ fun ChildAssessmentDetailScreen(
 
             if (ui.items.isEmpty()) {
                 Text(
-                    "No assessment items found for this session yet.\n\n",
+                    emptyStateText,
                     style = MaterialTheme.typography.bodyMedium
                 )
                 return@Column
@@ -199,8 +256,8 @@ fun ChildAssessmentDetailScreen(
 
                             Spacer(Modifier.height(6.dp))
 
-                            val questionText = item.questionSnapshot ?: "(no question text)"
-                            Text(questionText, style = MaterialTheme.typography.titleMedium)
+                            val promptText = item.questionSnapshot ?: "(no prompt text)"
+                            Text(promptText, style = MaterialTheme.typography.titleMedium)
 
                             Spacer(Modifier.height(10.dp))
 
@@ -209,7 +266,7 @@ fun ChildAssessmentDetailScreen(
                                 onValueChange = { v ->
                                     drafts[item.answerId] = draft.copy(answer = v)
                                 },
-                                label = { Text("Answer / Observation") },
+                                label = { Text(primaryInputLabel) },
                                 modifier = Modifier.fillMaxWidth()
                             )
 
@@ -220,23 +277,30 @@ fun ChildAssessmentDetailScreen(
                                 onValueChange = { v ->
                                     drafts[item.answerId] = draft.copy(recommendation = v)
                                 },
-                                label = { Text("Recommendation") },
+                                label = { Text(recommendationLabel) },
                                 modifier = Modifier.fillMaxWidth(),
                                 minLines = 2
                             )
 
-                            Spacer(Modifier.height(10.dp))
+                            if (!isObservationMode) {
+                                Spacer(Modifier.height(10.dp))
 
-                            val scoreFloat = draft.score.toFloat().coerceIn(0f, 10f)
-                            Text("Score: ${draft.score}", style = MaterialTheme.typography.labelMedium)
-                            Slider(
-                                value = scoreFloat,
-                                onValueChange = { f ->
-                                    drafts[item.answerId] = draft.copy(score = f.toInt().coerceIn(0, 10))
-                                },
-                                valueRange = 0f..10f,
-                                steps = 9
-                            )
+                                val scoreFloat = draft.score.toFloat().coerceIn(0f, 10f)
+                                Text(
+                                    "Score: ${draft.score}",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Slider(
+                                    value = scoreFloat,
+                                    onValueChange = { f ->
+                                        drafts[item.answerId] = draft.copy(
+                                            score = f.toInt().coerceIn(0, 10)
+                                        )
+                                    },
+                                    valueRange = 0f..10f,
+                                    steps = 9
+                                )
+                            }
 
                             Spacer(Modifier.height(10.dp))
 
@@ -245,7 +309,7 @@ fun ChildAssessmentDetailScreen(
                                 onValueChange = { v ->
                                     drafts[item.answerId] = draft.copy(notes = v)
                                 },
-                                label = { Text("Notes") },
+                                label = { Text(notesLabel) },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }

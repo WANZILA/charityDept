@@ -71,6 +71,8 @@ WHERE q.isDeleted = 0
   AND (
       :mode = 'ALL'
       OR q.categoryKey = :mode
+      OR (:mode = 'QA' AND LOWER(TRIM(q.category)) IN ('question', 'questions', 'q&a', 'qa'))
+      OR (:mode = 'OBS' AND LOWER(TRIM(q.category)) IN ('observation', 'observations', 'obs'))
   )
   AND (
       :assessmentKey = ''
@@ -88,7 +90,6 @@ ORDER BY
         mode: String,
         assessmentKey: String
     ): Flow<List<AssessmentAnswer>>
-
 
     @Query("""
         SELECT * FROM assessment_answers
@@ -114,12 +115,13 @@ ORDER BY
       AND (
           :mode = 'ALL'
           OR q.categoryKey = :mode
+          OR (:mode = 'QA' AND LOWER(TRIM(q.category)) IN ('question', 'questions', 'q&a', 'qa'))
+          OR (:mode = 'OBS' AND LOWER(TRIM(q.category)) IN ('observation', 'observations', 'obs'))
       )
     GROUP BY a.generalId
     ORDER BY MAX(a.updatedAt) DESC
 """)
     fun observeSessionRows(childId: String, mode: String): Flow<List<AssessmentSessionRow>>
-
 
     //    @Query("""
 //        SELECT

@@ -44,6 +44,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun QuestionFormScreen(
     questionIdArg: String?,
+    initialAssessmentKeyArg: String? = null,
     navigateUp: () -> Unit,
     onDone: (questionId: String) -> Unit,
     vm: AssessmentQuestionAdminViewModel = hiltViewModel()
@@ -99,6 +100,20 @@ fun QuestionFormScreen(
 
     val selectedLeaf: AssessmentTaxonomy? = remember(leafRows, subCategoryKey) {
         leafRows.firstOrNull { it.subCategoryKey == subCategoryKey }
+    }
+
+    LaunchedEffect(initialAssessmentKeyArg, questionIdArg, taxonomy) {
+        if (questionIdArg == null &&
+            !initialAssessmentKeyArg.isNullOrBlank() &&
+            assessmentKey.isBlank()
+        ) {
+            val exists = taxonomy.any { it.assessmentKey == initialAssessmentKeyArg }
+            if (exists) {
+                assessmentKey = initialAssessmentKeyArg
+                categoryKey = ""
+                subCategoryKey = ""
+            }
+        }
     }
 
     LaunchedEffect(questionIdArg) {

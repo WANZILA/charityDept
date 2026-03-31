@@ -679,11 +679,12 @@ fun CharityDeptNavHost(
                                         launchSingleTop = true
                                     }
                                 },
-                                onAdd = {
-                                    navController.navigate(Screen.QuestionForm.newQuestion()){
-                                    popUpTo(Screen.QuestionBank.route) { inclusive = true }
-                                    launchSingleTop = true
-                                } },
+                                onAdd = { initialAssessmentKey ->
+                                    navController.navigate(Screen.QuestionForm.newQuestion(initialAssessmentKey)) {
+                                        popUpTo(Screen.QuestionBank.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
                                 onEdit = { qid ->
                                     navController.navigate(Screen.QuestionForm.edit(qid)){
                                         popUpTo(Screen.QuestionBank.route) { inclusive = true }
@@ -704,8 +705,13 @@ fun CharityDeptNavHost(
                                         launchSingleTop = true
                                     }
                                 },
-                                onAdd = {
-                                    navController.navigate(Screen.TaxonomyForm.newTaxonomy()) {
+                                onAdd = { assessmentKey, assessmentLabel ->
+                                    navController.navigate(
+                                        Screen.TaxonomyForm.newTaxonomy(
+                                            initialAssessmentKey = assessmentKey,
+                                            initialAssessmentLabel = assessmentLabel
+                                        )
+                                    ) {
                                         popUpTo(Screen.TaxonomyBank.route) { inclusive = true }
                                         launchSingleTop = true
                                     }
@@ -722,10 +728,36 @@ fun CharityDeptNavHost(
                         }
                     }
 
-                    composable("taxonomy_form") {
+                    composable(
+                        route = "taxonomy_form?initialAssessmentKey={initialAssessmentKey}&initialAssessmentLabel={initialAssessmentLabel}",
+                        arguments = listOf(
+                            navArgument("taxonomyId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("initialAssessmentKey") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("initialAssessmentLabel") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
+                    ) { backStackEntry ->
                         if (canManageQuestions) {
+                            val initialAssessmentKey =
+                                backStackEntry.arguments?.getString("initialAssessmentKey")
+                            val initialAssessmentLabel =
+                                backStackEntry.arguments?.getString("initialAssessmentLabel")
+
                             TaxonomyFormScreen(
                                 taxonomyIdArg = null,
+                                initialAssessmentKeyArg = initialAssessmentKey,
+                                initialAssessmentLabelArg = initialAssessmentLabel,
                                 navigateUp = {
                                     navController.navigate(Screen.TaxonomyBank.route) {
                                         popUpTo("taxonomy_form") { inclusive = true }
@@ -743,7 +775,6 @@ fun CharityDeptNavHost(
                             LaunchedEffect(Unit) { navController.popBackStack() }
                         }
                     }
-
                     composable(
                         route = Screen.TaxonomyForm.route,
                         arguments = listOf(
@@ -771,16 +802,26 @@ fun CharityDeptNavHost(
                         }
                     }
 
-                    composable("question_form") {
+                    composable(
+                        route = "question_form?initialAssessmentKey={initialAssessmentKey}",
+                        arguments = listOf(
+                            navArgument("initialAssessmentKey") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
+                    ) { backStackEntry ->
                         if (canManageQuestions) {
                             QuestionFormScreen(
                                 questionIdArg = null,
+                                initialAssessmentKeyArg = backStackEntry.arguments?.getString("initialAssessmentKey"),
                                 navigateUp = {
-                                    navController.navigate(Screen.QuestionBank) {
+                                    navController.navigate(Screen.QuestionBank.route) {
                                         popUpTo("question_form") { inclusive = true }
                                         launchSingleTop = true
                                     }
-                                             },
+                                },
                                 onDone = {
                                     navController.navigate("question_bank") {
                                         popUpTo("question_form") { inclusive = true }
@@ -797,6 +838,11 @@ fun CharityDeptNavHost(
                         route = Screen.QuestionForm.route,
                         arguments = listOf(
                             navArgument("questionId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("initialAssessmentKey") {
                                 type = NavType.StringType
                                 nullable = true
                                 defaultValue = null

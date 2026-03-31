@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+//import androidx.compose.foundation.layout.menuAnchor
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
@@ -13,6 +14,9 @@ import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -34,10 +38,44 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.charityDept.data.model.AssessmentTaxonomy
 import kotlinx.coroutines.launch
 
+private fun normalizeKey(raw: String): String {
+    return raw
+        .trim()
+        .uppercase()
+        .replace("&", "_&_")
+        .replace(Regex("[^A-Z0-9&_]+"), "_")
+        .replace(Regex("_+"), "_")
+        .trim('_')
+}
+
+private fun splitLabelFor(splitKey: String): String {
+    return when (splitKey.trim().uppercase()) {
+        "QA" -> "Questions"
+        "OBS" -> "Observations"
+        else -> ""
+    }
+}
+
+private fun assessmentPrefixFor(assessmentKey: String): String {
+    val parts = assessmentKey
+        .trim()
+        .uppercase()
+        .split("_")
+        .filter { it.isNotBlank() }
+
+    return when {
+        parts.size >= 2 -> parts.joinToString("") { it.first().toString() }
+        parts.size == 1 -> parts.first().take(2)
+        else -> ""
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaxonomyFormScreen(
     taxonomyIdArg: String?,
+    initialAssessmentKeyArg: String? = null,
+    initialAssessmentLabelArg: String? = null,
     navigateUp: () -> Unit,
     onDone: (id: String) -> Unit,
     vm: AssessmentTaxonomyAdminViewModel = hiltViewModel()
@@ -47,31 +85,61 @@ fun TaxonomyFormScreen(
     var loading by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
-    var assessmentKey by remember { mutableStateOf("") }
     var assessmentLabel by remember { mutableStateOf("") }
-    var categoryKey by remember { mutableStateOf("") }
-    var categoryLabel by remember { mutableStateOf("") }
-    var subCategoryKey by remember { mutableStateOf("") }
+    var splitKey by remember { mutableStateOf("") }
     var subCategoryLabel by remember { mutableStateOf("") }
     var indexNumText by remember { mutableStateOf("0") }
     var isActive by remember { mutableStateOf(true) }
+    var splitExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(taxonomyIdArg) {
         val id = taxonomyIdArg ?: return@LaunchedEffect
         loading = true
         val existing = vm.loadOnce(id)
         if (existing != null) {
-            assessmentKey = existing.assessmentKey
             assessmentLabel = existing.assessmentLabel
-            categoryKey = existing.categoryKey
-            categoryLabel = existing.categoryLabel
-            subCategoryKey = existing.subCategoryKey
+            splitKey = existing.categoryKey
             subCategoryLabel = existing.subCategoryLabel
             indexNumText = existing.indexNum.toString()
             isActive = existing.isActive
         }
         loading = false
     }
+
+    LaunchedEffect(taxonomyIdArg, initialAssessmentKeyArg, initialAssessmentLabelArg) {
+        if (taxonomyIdArg == null) {
+            if (!initialAssessmentLabelArg.isNullOrBlank() && assessmentLabel.isBlank()) {
+                assessmentLabel = initialAssessmentLabelArg
+            }
+        }
+    }
+    val assessmentKey = remember(assessmentLabel) {
+        normalizeKey(assessmentLabel)
+    }
+
+    val categoryKey = remember(splitKey) {
+        splitKey.trim().uppercase()
+    }
+
+    val categoryLabel = remember(categoryKey) {
+        splitLabelFor(categoryKey)
+    }
+
+    val subCategoryKey = remember(assessmentKey, categoryKey, subCategoryLabel) {
+        val prefix = assessmentPrefixFor(assessmentKey)
+        val sub = normalizeKey(subCategoryLabel)
+        listOf(prefix, categoryKey, sub)
+            .filter { it.isNotBlank() }
+            .joinToString("_")
+    }
+
+    val canSave =
+        assessmentLabel.isNotBlank() &&
+                assessmentKey.isNotBlank() &&
+                categoryKey.isNotBlank() &&
+                categoryLabel.isNotBlank() &&
+                subCategoryLabel.isNotBlank() &&
+                subCategoryKey.isNotBlank()
 
     if (showDeleteConfirm && taxonomyIdArg != null) {
         AlertDialog(
@@ -112,11 +180,11 @@ fun TaxonomyFormScreen(
                             scope.launch {
                                 val draft = AssessmentTaxonomy(
                                     taxonomyId = taxonomyIdArg ?: "",
-                                    assessmentKey = assessmentKey.trim(),
+                                    assessmentKey = assessmentKey,
                                     assessmentLabel = assessmentLabel.trim(),
-                                    categoryKey = categoryKey.trim(),
-                                    categoryLabel = categoryLabel.trim(),
-                                    subCategoryKey = subCategoryKey.trim(),
+                                    categoryKey = categoryKey,
+                                    categoryLabel = categoryLabel,
+                                    subCategoryKey = subCategoryKey,
                                     subCategoryLabel = subCategoryLabel.trim(),
                                     indexNum = indexNumText.trim().toIntOrNull() ?: 0,
                                     isActive = isActive
@@ -124,13 +192,7 @@ fun TaxonomyFormScreen(
                                 vm.upsert(draft) { id -> onDone(id) }
                             }
                         },
-                        enabled =
-                            assessmentKey.isNotBlank() &&
-                                    assessmentLabel.isNotBlank() &&
-                                    categoryKey.isNotBlank() &&
-                                    categoryLabel.isNotBlank() &&
-                                    subCategoryKey.isNotBlank() &&
-                                    subCategoryLabel.isNotBlank()
+                        enabled = canSave
                     ) {
                         Icon(Icons.Outlined.Save, contentDescription = "Save")
                     }
@@ -156,13 +218,6 @@ fun TaxonomyFormScreen(
             }
 
             OutlinedTextField(
-                value = assessmentKey,
-                onValueChange = { assessmentKey = it },
-                label = { Text("Assessment Key") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
                 value = assessmentLabel,
                 onValueChange = { assessmentLabel = it },
                 label = { Text("Assessment Label") },
@@ -170,23 +225,51 @@ fun TaxonomyFormScreen(
             )
 
             OutlinedTextField(
-                value = categoryKey,
-                onValueChange = { categoryKey = it },
-                label = { Text("Split Key") },
+                value = assessmentKey,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Assessment Key") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            ExposedDropdownMenuBox(
+                expanded = splitExpanded,
+                onExpandedChange = { splitExpanded = !splitExpanded }
+            ) {
+                OutlinedTextField(
+                    value = categoryKey,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Split Key") },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = splitExpanded)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = splitExpanded,
+                    onDismissRequest = { splitExpanded = false }
+                ) {
+                    listOf("QA", "OBS").forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                splitKey = option
+                                splitExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
 
             OutlinedTextField(
                 value = categoryLabel,
-                onValueChange = { categoryLabel = it },
+                onValueChange = {},
+                readOnly = true,
                 label = { Text("Split Label") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = subCategoryKey,
-                onValueChange = { subCategoryKey = it },
-                label = { Text("Sub Category Key") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -194,6 +277,14 @@ fun TaxonomyFormScreen(
                 value = subCategoryLabel,
                 onValueChange = { subCategoryLabel = it },
                 label = { Text("Sub Category Label") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = subCategoryKey,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Sub Category Key") },
                 modifier = Modifier.fillMaxWidth()
             )
 

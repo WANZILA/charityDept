@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+//import androidx.compose.foundation.layout.menuAnchor
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -16,11 +17,11 @@ import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ElevatedCard
-//import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+//import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -30,12 +31,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -52,11 +52,39 @@ fun ChildAssessmentHistoryScreen(
     vm: ChildAssessmentHistoryViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
-    val label = when (mode) {
+    val isObservationMode = mode == "OBS"
+
+    val screenLabel = when (mode) {
         "QA" -> "Q&A Assessments"
         "OBS" -> "Observations"
         else -> "Assessments"
     }
+
+    val dialogTitle = if (isObservationMode) {
+        "Choose Observation Tool"
+    } else {
+        "Choose Q&A Tool"
+    }
+
+    val dropdownLabel = if (isObservationMode) {
+        "Observation Tool"
+    } else {
+        "Q&A Tool"
+    }
+
+    val emptyToolsText = if (isObservationMode) {
+        "No active observation tools found yet."
+    } else {
+        "No active Q&A tools found yet."
+    }
+
+    val emptyHistoryText = if (isObservationMode) {
+        "No observation sessions yet. Tap + to start one."
+    } else {
+        "No Q&A sessions yet. Tap + to start one."
+    }
+
+    val startButtonLabel = if (isObservationMode) "Start Observation" else "Start Q&A"
 
     val sessionsFlow = remember(childId, mode) { vm.sessions(childId, mode) }
     val ui by sessionsFlow.collectAsStateWithLifecycle()
@@ -80,11 +108,11 @@ fun ChildAssessmentHistoryScreen(
 
         AlertDialog(
             onDismissRequest = { showStartDialog = false },
-            title = { Text("Choose Assessment Tool") },
+            title = { Text(dialogTitle) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (tools.isEmpty()) {
-                        Text("No active assessment tools found for this split yet.")
+                        Text(emptyToolsText)
                     } else {
                         ExposedDropdownMenuBox(
                             expanded = expanded,
@@ -94,11 +122,13 @@ fun ChildAssessmentHistoryScreen(
                                 value = selectedAssessmentLabel,
                                 onValueChange = {},
                                 readOnly = true,
-                                label = { Text("Assessment Tool") },
+                                label = { Text(dropdownLabel) },
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                                 },
-                                modifier = Modifier.menuAnchor().fillMaxWidth()
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth()
                             )
                             ExposedDropdownMenu(
                                 expanded = expanded,
@@ -128,7 +158,7 @@ fun ChildAssessmentHistoryScreen(
                             onStartNew(newId, selectedAssessmentKey)
                         }
                     }
-                ) { Text("Start") }
+                ) { Text(startButtonLabel) }
             },
             dismissButton = {
                 TextButton(onClick = { showStartDialog = false }) { Text("Cancel") }
@@ -139,7 +169,7 @@ fun ChildAssessmentHistoryScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(label) },
+                title = { Text(screenLabel) },
                 navigationIcon = {
                     IconButton(onClick = navigateUp) {
                         Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
@@ -171,7 +201,7 @@ fun ChildAssessmentHistoryScreen(
             }
 
             if (ui.sessions.isEmpty()) {
-                Text("No assessments yet. Tap + to start one.")
+                Text(emptyHistoryText)
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(

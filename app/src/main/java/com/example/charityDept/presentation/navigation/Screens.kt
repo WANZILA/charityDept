@@ -175,16 +175,52 @@ sealed class Screen(val route: String) {
     // /// ADDED: Question Bank
     object QuestionBank : Screen("question_bank")
 
-    object QuestionForm : Screen("question_form?questionId={questionId}") {
-        fun newQuestion() = "question_form"
+    object QuestionForm : Screen(
+        "question_form" +
+                "?questionId={questionId}" +
+                "&initialAssessmentKey={initialAssessmentKey}"
+    ) {
+        fun newQuestion(initialAssessmentKey: String? = null): String {
+            return if (initialAssessmentKey.isNullOrBlank()) {
+                "question_form"
+            } else {
+                "question_form?initialAssessmentKey=$initialAssessmentKey"
+            }
+        }
+
         fun edit(id: String) = "question_form?questionId=$id"
     }
 
     object TaxonomyBank : Screen("taxonomy_bank")
 
-    object TaxonomyForm : Screen("taxonomy_form?taxonomyId={taxonomyId}") {
-        fun newTaxonomy() = "taxonomy_form"
+    object TaxonomyForm : Screen(
+        "taxonomy_form" +
+                "?taxonomyId={taxonomyId}" +
+                "&initialAssessmentKey={initialAssessmentKey}" +
+                "&initialAssessmentLabel={initialAssessmentLabel}"
+    ) {
+        fun newTaxonomy(
+            initialAssessmentKey: String? = null,
+            initialAssessmentLabel: String? = null
+        ): String {
+            val params = mutableListOf<String>()
+            if (!initialAssessmentKey.isNullOrBlank()) {
+                params += "initialAssessmentKey=${enc(initialAssessmentKey)}"
+            }
+            if (!initialAssessmentLabel.isNullOrBlank()) {
+                params += "initialAssessmentLabel=${enc(initialAssessmentLabel)}"
+            }
+            return if (params.isEmpty()) {
+                "taxonomy_form"
+            } else {
+                "taxonomy_form?${params.joinToString("&")}"
+            }
+        }
+
         fun edit(id: String) = "taxonomy_form?taxonomyId=$id"
+
+        private fun enc(value: String): String =
+            URLEncoder.encode(value, StandardCharsets.UTF_8.toString())
     }
 
 
