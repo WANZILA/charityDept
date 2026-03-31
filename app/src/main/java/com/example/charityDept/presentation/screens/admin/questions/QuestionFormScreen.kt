@@ -63,6 +63,8 @@ fun QuestionFormScreen(
 
     val taxonomy by vm.taxonomy.collectAsStateWithLifecycle()
 
+    val adminUi by vm.ui.collectAsStateWithLifecycle()
+
     val assessments = remember(taxonomy) {
         taxonomy
             .groupBy { it.assessmentKey }
@@ -100,6 +102,32 @@ fun QuestionFormScreen(
 
     val selectedLeaf: AssessmentTaxonomy? = remember(leafRows, subCategoryKey) {
         leafRows.firstOrNull { it.subCategoryKey == subCategoryKey }
+    }
+
+    val normalizedQuestion = remember(question) {
+        question.trim().lowercase()
+    }
+
+    val duplicateQuestion = remember(
+        adminUi.items,
+        questionIdArg,
+        assessmentKey,
+        categoryKey,
+        subCategoryKey,
+        normalizedQuestion
+    ) {
+        if (normalizedQuestion.isBlank()) {
+            null
+        } else {
+            adminUi.items.firstOrNull { existing ->
+                existing.questionId != (questionIdArg ?: "") &&
+                        !existing.isDeleted &&
+                        existing.assessmentKey == assessmentKey &&
+                        existing.categoryKey == categoryKey &&
+                        existing.subCategoryKey == subCategoryKey &&
+                        existing.question.trim().lowercase() == normalizedQuestion
+            }
+        }
     }
 
     LaunchedEffect(initialAssessmentKeyArg, questionIdArg, taxonomy) {
@@ -189,7 +217,8 @@ fun QuestionFormScreen(
                                     categoryKey.isNotBlank() &&
                                     subCategoryKey.isNotBlank() &&
                                     selectedLeaf != null &&
-                                    question.isNotBlank()
+                                    question.isNotBlank() &&
+                                    duplicateQuestion == null
                     ) {
                         Icon(Icons.Outlined.Save, contentDescription = "Save")
                     }
@@ -317,8 +346,15 @@ fun QuestionFormScreen(
                 onValueChange = { question = it },
                 label = { Text("Prompt / Item") },
                 modifier = Modifier.fillMaxWidth(),
-                minLines = 3
+                minLines = 3,
+                isError = duplicateQuestion != null
             )
+            if (duplicateQuestion != null) {
+                Text(
+                    "A question with the same text already exists in this assessment category.",
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.error
+                )
+            }
 
             OutlinedTextField(
                 value = indexNumText,

@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.charityDept.data.model.AssessmentTaxonomy
 import kotlinx.coroutines.launch
-
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 private fun normalizeKey(raw: String): String {
     return raw
         .trim()
@@ -92,6 +92,8 @@ fun TaxonomyFormScreen(
     var isActive by remember { mutableStateOf(true) }
     var splitExpanded by remember { mutableStateOf(false) }
 
+    val adminUi by vm.ui.collectAsStateWithLifecycle()
+
     LaunchedEffect(taxonomyIdArg) {
         val id = taxonomyIdArg ?: return@LaunchedEffect
         loading = true
@@ -133,13 +135,38 @@ fun TaxonomyFormScreen(
             .joinToString("_")
     }
 
+    val duplicateTaxonomy = remember(
+        adminUi.items,
+        taxonomyIdArg,
+        assessmentKey,
+        categoryKey,
+        subCategoryKey
+    ) {
+        if (
+            assessmentKey.isBlank() ||
+            categoryKey.isBlank() ||
+            subCategoryKey.isBlank()
+        ) {
+            null
+        } else {
+            adminUi.items.firstOrNull { existing ->
+                existing.taxonomyId != (taxonomyIdArg ?: "") &&
+                        !existing.isDeleted &&
+                        existing.assessmentKey == assessmentKey &&
+                        existing.categoryKey == categoryKey &&
+                        existing.subCategoryKey == subCategoryKey
+            }
+        }
+    }
+
     val canSave =
         assessmentLabel.isNotBlank() &&
                 assessmentKey.isNotBlank() &&
                 categoryKey.isNotBlank() &&
                 categoryLabel.isNotBlank() &&
                 subCategoryLabel.isNotBlank() &&
-                subCategoryKey.isNotBlank()
+                subCategoryKey.isNotBlank() &&
+                duplicateTaxonomy == null
 
     if (showDeleteConfirm && taxonomyIdArg != null) {
         AlertDialog(
@@ -277,8 +304,12 @@ fun TaxonomyFormScreen(
                 value = subCategoryLabel,
                 onValueChange = { subCategoryLabel = it },
                 label = { Text("Sub Category Label") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = duplicateTaxonomy != null
             )
+            if (duplicateTaxonomy != null) {
+                Text("This taxonomy row already exists for the selected assessment and split.")
+            }
 
             OutlinedTextField(
                 value = subCategoryKey,
