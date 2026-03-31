@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 fun QuestionFormScreen(
     questionIdArg: String?,
     initialAssessmentKeyArg: String? = null,
+    initialAssessmentLabelArg: String? = null,
     navigateUp: () -> Unit,
     onDone: (questionId: String) -> Unit,
     vm: AssessmentQuestionAdminViewModel = hiltViewModel()
@@ -92,8 +93,19 @@ fun QuestionFormScreen(
             .sortedBy { it.indexNum }
     }
 
-    val selectedAssessmentLabel = remember(assessments, assessmentKey) {
-        assessments.firstOrNull { it.first == assessmentKey }?.second.orEmpty()
+    val selectedAssessmentLabel = remember(
+        assessments,
+        assessmentKey,
+        initialAssessmentKeyArg,
+        initialAssessmentLabelArg
+    ) {
+        when {
+            assessmentKey.isBlank() -> ""
+            assessmentKey == initialAssessmentKeyArg && !initialAssessmentLabelArg.isNullOrBlank() ->
+                initialAssessmentLabelArg
+            else ->
+                assessments.firstOrNull { it.first == assessmentKey }?.second.orEmpty()
+        }
     }
 
     val selectedSplitLabel = remember(splits, categoryKey) {
@@ -130,7 +142,7 @@ fun QuestionFormScreen(
         }
     }
 
-    LaunchedEffect(initialAssessmentKeyArg, questionIdArg, taxonomy) {
+    LaunchedEffect(initialAssessmentKeyArg, initialAssessmentLabelArg, questionIdArg, taxonomy) {
         if (questionIdArg == null &&
             !initialAssessmentKeyArg.isNullOrBlank() &&
             assessmentKey.isBlank()

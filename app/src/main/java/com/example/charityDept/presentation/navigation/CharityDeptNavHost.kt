@@ -679,8 +679,13 @@ fun CharityDeptNavHost(
                                         launchSingleTop = true
                                     }
                                 },
-                                onAdd = { initialAssessmentKey ->
-                                    navController.navigate(Screen.QuestionForm.newQuestion(initialAssessmentKey)) {
+                                onAdd = { initialAssessmentKey, initialAssessmentLabel ->
+                                    navController.navigate(
+                                        Screen.QuestionForm.newQuestion(
+                                            initialAssessmentKey = initialAssessmentKey,
+                                            initialAssessmentLabel = initialAssessmentLabel
+                                        )
+                                    ) {
                                         popUpTo(Screen.QuestionBank.route) { inclusive = true }
                                         launchSingleTop = true
                                     }
@@ -803,9 +808,14 @@ fun CharityDeptNavHost(
                     }
 
                     composable(
-                        route = "question_form?initialAssessmentKey={initialAssessmentKey}",
+                        route = "question_form?initialAssessmentKey={initialAssessmentKey}&initialAssessmentLabel={initialAssessmentLabel}",
                         arguments = listOf(
                             navArgument("initialAssessmentKey") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("initialAssessmentLabel") {
                                 type = NavType.StringType
                                 nullable = true
                                 defaultValue = null
@@ -816,6 +826,7 @@ fun CharityDeptNavHost(
                             QuestionFormScreen(
                                 questionIdArg = null,
                                 initialAssessmentKeyArg = backStackEntry.arguments?.getString("initialAssessmentKey"),
+                                initialAssessmentLabelArg = backStackEntry.arguments?.getString("initialAssessmentLabel"),
                                 navigateUp = {
                                     navController.navigate(Screen.QuestionBank.route) {
                                         popUpTo("question_form") { inclusive = true }
@@ -846,6 +857,11 @@ fun CharityDeptNavHost(
                                 type = NavType.StringType
                                 nullable = true
                                 defaultValue = null
+                            },
+                            navArgument("initialAssessmentLabel") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
                             }
                         )
                     ) { backStackEntry ->
@@ -853,6 +869,8 @@ fun CharityDeptNavHost(
                             val qid = backStackEntry.arguments?.getString("questionId")
                             QuestionFormScreen(
                                 questionIdArg = qid,
+                                initialAssessmentKeyArg = backStackEntry.arguments?.getString("initialAssessmentKey"),
+                                initialAssessmentLabelArg = backStackEntry.arguments?.getString("initialAssessmentLabel"),
                                 navigateUp = { navController.popBackStack() },
                                 onDone = {
                                     navController.navigate(Screen.QuestionBank.route) {

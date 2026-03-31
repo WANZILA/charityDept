@@ -56,6 +56,7 @@ class CharityDeptApp : Application(), Configuration.Provider {
         EventsSeedScheduler.enqueue(this)
         AttendencesSeedScheduler.enqueue(this)
         ChildrenSeedScheduler.enqueue(this)
+
         AssessmentTaxonomySeedScheduler.enqueue(this)
 
 

@@ -178,19 +178,32 @@ sealed class Screen(val route: String) {
     object QuestionForm : Screen(
         "question_form" +
                 "?questionId={questionId}" +
-                "&initialAssessmentKey={initialAssessmentKey}"
+                "&initialAssessmentKey={initialAssessmentKey}" +
+                "&initialAssessmentLabel={initialAssessmentLabel}"
     ) {
-        fun newQuestion(initialAssessmentKey: String? = null): String {
-            return if (initialAssessmentKey.isNullOrBlank()) {
+        fun newQuestion(
+            initialAssessmentKey: String? = null,
+            initialAssessmentLabel: String? = null
+        ): String {
+            val params = mutableListOf<String>()
+            if (!initialAssessmentKey.isNullOrBlank()) {
+                params += "initialAssessmentKey=${enc(initialAssessmentKey)}"
+            }
+            if (!initialAssessmentLabel.isNullOrBlank()) {
+                params += "initialAssessmentLabel=${enc(initialAssessmentLabel)}"
+            }
+            return if (params.isEmpty()) {
                 "question_form"
             } else {
-                "question_form?initialAssessmentKey=$initialAssessmentKey"
+                "question_form?${params.joinToString("&")}"
             }
         }
 
         fun edit(id: String) = "question_form?questionId=$id"
-    }
 
+        private fun enc(value: String): String =
+            URLEncoder.encode(value, StandardCharsets.UTF_8.toString())
+    }
     object TaxonomyBank : Screen("taxonomy_bank")
 
     object TaxonomyForm : Screen(

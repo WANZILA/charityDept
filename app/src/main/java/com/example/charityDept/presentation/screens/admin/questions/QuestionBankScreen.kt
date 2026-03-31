@@ -42,7 +42,7 @@ private data class QuestionAssessmentRow(
 @Composable
 fun QuestionBankScreen(
     navigateUp: () -> Unit,
-    onAdd: (initialAssessmentKey: String?) -> Unit,
+    onAdd: (initialAssessmentKey: String?, initialAssessmentLabel: String?) -> Unit,
     onEdit: (questionId: String) -> Unit,
     vm: AssessmentQuestionAdminViewModel = hiltViewModel()
 ) {
@@ -117,7 +117,14 @@ fun QuestionBankScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onAdd(selectedAssessmentKey) }) {
+                    IconButton(
+                        onClick = {
+                            val selectedLabel =
+                                assessmentRows.firstOrNull { it.assessmentKey == selectedAssessmentKey }
+                                    ?.assessmentLabel
+                            onAdd(selectedAssessmentKey, selectedLabel)
+                        }
+                    ) {
                         Icon(Icons.Outlined.Add, contentDescription = "Add")
                     }
                 }
