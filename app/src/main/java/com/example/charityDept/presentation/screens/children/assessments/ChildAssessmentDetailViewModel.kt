@@ -23,16 +23,18 @@ class ChildAssessmentDetailViewModel @Inject constructor(
     private val repo: OfflineAssessmentRepository
 ) : ViewModel() {
 
-    fun session(childId: String, generalId: String, mode: String): StateFlow<AssessmentDetailUiState> {
-        return repo.observeSession(childId, generalId)
+    fun session(
+        childId: String,
+        generalId: String,
+        mode: String,
+        assessmentKey: String
+    ): StateFlow<AssessmentDetailUiState> {
+        return repo.observeSession(childId, generalId, mode, assessmentKey)
             .map { list ->
-                val filtered = when (mode) {
-                    "OBS" -> list.filter { it.category.equals("Observation", true) }
-                    "QA"  -> list.filter { !it.category.equals("Observation", true) }
-                    else  -> list
-                }
-
-                AssessmentDetailUiState(loading = false, items = filtered)
+                AssessmentDetailUiState(
+                    loading = false,
+                    items = list
+                )
             }
             .stateIn(
                 viewModelScope,
@@ -50,7 +52,6 @@ class ChildAssessmentDetailViewModel @Inject constructor(
         }
     }
 
-    // /// ADDED: soft delete
     fun softDeleteAnswer(answerId: String) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
@@ -58,4 +59,3 @@ class ChildAssessmentDetailViewModel @Inject constructor(
         }
     }
 }
-

@@ -29,6 +29,7 @@ fun ChildAssessmentDetailScreen(
     childId: String,
     generalId: String,
     mode: String,
+    assessmentKey: String,
     navigateUp: () -> Unit,
     modifier: Modifier = Modifier,
     vm: ChildAssessmentDetailViewModel = hiltViewModel()
@@ -42,8 +43,8 @@ fun ChildAssessmentDetailScreen(
         else -> "Assessment Session"
     }
 
-    val sessionFlow = remember(childId, generalId, mode) {
-        vm.session(childId, generalId, mode)
+    val sessionFlow = remember(childId, generalId, mode, assessmentKey) {
+        vm.session(childId, generalId, mode, assessmentKey)
     }
     val ui by sessionFlow.collectAsStateWithLifecycle()
 

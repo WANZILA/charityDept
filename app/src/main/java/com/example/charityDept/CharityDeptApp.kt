@@ -21,6 +21,7 @@ import dagger.hilt.android.HiltAndroidApp
 import dagger.hilt.components.SingletonComponent
 import timber.log.Timber
 import javax.inject.Inject
+import com.example.charityDept.data.local.seed.AssessmentTaxonomySeedScheduler
 
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
@@ -55,6 +56,7 @@ class CharityDeptApp : Application(), Configuration.Provider {
         EventsSeedScheduler.enqueue(this)
         AttendencesSeedScheduler.enqueue(this)
         ChildrenSeedScheduler.enqueue(this)
+        AssessmentTaxonomySeedScheduler.enqueue(this)
 
 
         // Firestore persistent cache BEFORE any Firestore access

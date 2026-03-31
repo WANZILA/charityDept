@@ -180,6 +180,13 @@ sealed class Screen(val route: String) {
         fun edit(id: String) = "question_form?questionId=$id"
     }
 
+    object TaxonomyBank : Screen("taxonomy_bank")
+
+    object TaxonomyForm : Screen("taxonomy_form?taxonomyId={taxonomyId}") {
+        fun newTaxonomy() = "taxonomy_form"
+        fun edit(id: String) = "taxonomy_form?taxonomyId=$id"
+    }
+
 
 
     /***
@@ -193,9 +200,13 @@ sealed class Screen(val route: String) {
         fun all(childId: String) = "child_assessment_history/$childId?mode=ALL"
     }
 
-    object ChildAssessmentDetail : Screen("child_assessment_detail/{childId}/{generalId}?mode={mode}") {
-        fun open(childId: String, generalId: String, mode: String = "ALL") =
-            "child_assessment_detail/$childId/$generalId?mode=$mode"
+    object ChildAssessmentDetail : Screen("child_assessment_detail/{childId}/{generalId}?mode={mode}&assessmentKey={assessmentKey}") {
+        fun open(
+            childId: String,
+            generalId: String,
+            mode: String = "ALL",
+            assessmentKey: String = ""
+        ) = "child_assessment_detail/$childId/$generalId?mode=$mode&assessmentKey=$assessmentKey"
     }
 
 

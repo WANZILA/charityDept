@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 data class AssessmentSessionRow(
     val generalId: String,
     val lastUpdated: Long,
+    val assessmentKey: String,
     val assessmentLabel: String,
     val questionSnapshot: String,
     val itemCount: Int,
@@ -67,13 +68,27 @@ LEFT JOIN assessment_taxonomy t
  AND t.isActive = 1
 WHERE q.isDeleted = 0
   AND q.isActive = 1
+  AND (
+      :mode = 'ALL'
+      OR q.categoryKey = :mode
+  )
+  AND (
+      :assessmentKey = ''
+      OR q.assessmentKey = :assessmentKey
+  )
 ORDER BY
   COALESCE(t.indexNum, 999999),
   COALESCE(q.indexNum, 999999),
   COALESCE(q.subCategoryKey, ''),
   q.questionId
 """)
-    fun observeSession(childId: String, generalId: String): Flow<List<AssessmentAnswer>>
+    fun observeSession(
+        childId: String,
+        generalId: String,
+        mode: String,
+        assessmentKey: String
+    ): Flow<List<AssessmentAnswer>>
+
 
     @Query("""
         SELECT * FROM assessment_answers
@@ -83,27 +98,30 @@ ORDER BY
     suspend fun getOnce(answerId: String): AssessmentAnswer?
 
     @Query("""
-        SELECT
-          generalId AS generalId,
-          MAX(updatedAt) AS lastUpdated,
-          COALESCE(MIN(NULLIF(assessmentLabel, '')), 'Assessment') AS assessmentLabel,
-          COALESCE(MIN(questionSnapshot), '') AS questionSnapshot,
-          COUNT(*) AS itemCount,
-          MIN(enteredByUid) AS enteredByUid
-        FROM assessment_answers
-        WHERE isDeleted = 0
-          AND childId = :childId
-        GROUP BY generalId
-        HAVING (
-            (:mode = 'OBS' AND SUM(CASE WHEN LOWER(category) = 'observation' THEN 1 ELSE 0 END) > 0)
-         OR (:mode = 'QA'  AND SUM(CASE WHEN LOWER(category) <> 'observation' THEN 1 ELSE 0 END) > 0)
-         OR (:mode NOT IN ('OBS','QA'))
-        )
-        ORDER BY MAX(updatedAt) DESC
-    """)
+    SELECT
+      a.generalId AS generalId,
+      MAX(a.updatedAt) AS lastUpdated,
+      COALESCE(MIN(NULLIF(a.assessmentKey, '')), '') AS assessmentKey,
+      COALESCE(MIN(NULLIF(a.assessmentLabel, '')), 'Assessment') AS assessmentLabel,
+      COALESCE(MIN(a.questionSnapshot), '') AS questionSnapshot,
+      COUNT(*) AS itemCount,
+      MIN(a.enteredByUid) AS enteredByUid
+    FROM assessment_answers a
+    LEFT JOIN assessment_questions q
+      ON q.questionId = a.questionId
+    WHERE a.isDeleted = 0
+      AND a.childId = :childId
+      AND (
+          :mode = 'ALL'
+          OR q.categoryKey = :mode
+      )
+    GROUP BY a.generalId
+    ORDER BY MAX(a.updatedAt) DESC
+""")
     fun observeSessionRows(childId: String, mode: String): Flow<List<AssessmentSessionRow>>
 
-//    @Query("""
+
+    //    @Query("""
 //        SELECT
 //          generalId AS generalId,
 //          MAX(updatedAt) AS lastUpdated,

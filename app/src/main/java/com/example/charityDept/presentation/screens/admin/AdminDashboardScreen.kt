@@ -37,6 +37,7 @@ fun AdminDashboardScreen(
     toMigrationToolKit: () -> Unit,
     toUsersDashboard: () -> Unit,
     toQuestionBank: () -> Unit,
+    toTaxonomyBank: () -> Unit,
     toChildrenDashboard: () -> Unit,
     toEventsDashboard: () -> Unit,
     toAttendanceDashboard: () -> Unit,
@@ -130,11 +131,13 @@ fun AdminDashboardScreen(
                             )
 
                             ZionDashboardCard(
-                                title = "📊 Reports",
+                                title = "🗂️ Taxonomy Bank",
                                 value = "",
                                 modifier = Modifier.weight(1f),
-                                onClick = toReportsDashboard
+                                onClick = toTaxonomyBank
                             )
+
+
                         }
 
                         // --- Row 3 (Core modules) ---
@@ -176,6 +179,19 @@ fun AdminDashboardScreen(
                                 onClick = { /* optional: later route to assessments admin */ }
                             )
                         }
+
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            ZionDashboardCard(
+                                title = "📊 Reports",
+                                value = "",
+                                modifier = Modifier.weight(1f),
+                                onClick = toReportsDashboard
+                            )
+                        }
+
 
                         Row(
                             Modifier.fillMaxWidth(),

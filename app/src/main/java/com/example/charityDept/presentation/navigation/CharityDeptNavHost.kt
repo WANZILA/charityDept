@@ -36,6 +36,8 @@ import com.example.charityDept.presentation.screens.events.*
 import com.example.charityDept.presentation.screens.reports.ReportScreen
 import com.example.charityDept.presentation.screens.splash.SplashScreen
 import com.example.charityDept.presentation.screens.admin.streets.StreetsScreen
+import com.example.charityDept.presentation.screens.admin.taxonomy.TaxonomyBankScreen
+import com.example.charityDept.presentation.screens.admin.taxonomy.TaxonomyFormScreen
 import com.example.charityDept.presentation.screens.families.FamilyDashboardScreen
 import com.example.charityDept.presentation.screens.families.FamilyDetailsScreen
 import com.example.charityDept.presentation.screens.families.FamilyFormScreen
@@ -490,6 +492,12 @@ fun CharityDeptNavHost(
                                         launchSingleTop = true
                                     }
                                 },
+                                toTaxonomyBank = {
+                                    navController.navigate(Screen.TaxonomyBank.route) {
+                                        popUpTo(Screen.AdminDashboard.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
                                 toChildrenDashboard = {},
                                 toEventsDashboard = {},
                                 toAttendanceDashboard = {},
@@ -660,6 +668,8 @@ fun CharityDeptNavHost(
                         )
                     }
 
+                    //Question Bank
+
                     composable(Screen.QuestionBank.route) {
                         if (canManageQuestions) {
                             QuestionBankScreen(
@@ -679,6 +689,82 @@ fun CharityDeptNavHost(
                                         popUpTo(Screen.QuestionBank.route) { inclusive = true }
                                         launchSingleTop = true
                                     } }
+                            )
+                        } else {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        }
+                    }
+
+                    composable(Screen.TaxonomyBank.route) {
+                        if (canManageQuestions) {
+                            TaxonomyBankScreen(
+                                navigateUp = {
+                                    navController.navigate(Screen.AdminDashboard.route) {
+                                        popUpTo(Screen.TaxonomyBank.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                onAdd = {
+                                    navController.navigate(Screen.TaxonomyForm.newTaxonomy()) {
+                                        popUpTo(Screen.TaxonomyBank.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                onEdit = { taxonomyId ->
+                                    navController.navigate(Screen.TaxonomyForm.edit(taxonomyId)) {
+                                        popUpTo(Screen.TaxonomyBank.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+                            )
+                        } else {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        }
+                    }
+
+                    composable("taxonomy_form") {
+                        if (canManageQuestions) {
+                            TaxonomyFormScreen(
+                                taxonomyIdArg = null,
+                                navigateUp = {
+                                    navController.navigate(Screen.TaxonomyBank.route) {
+                                        popUpTo("taxonomy_form") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                },
+                                onDone = {
+                                    navController.navigate(Screen.TaxonomyBank.route) {
+                                        popUpTo("taxonomy_form") { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
+                            )
+                        } else {
+                            LaunchedEffect(Unit) { navController.popBackStack() }
+                        }
+                    }
+
+                    composable(
+                        route = Screen.TaxonomyForm.route,
+                        arguments = listOf(
+                            navArgument("taxonomyId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
+                        )
+                    ) { backStackEntry ->
+                        if (canManageQuestions) {
+                            val taxonomyId = backStackEntry.arguments?.getString("taxonomyId")
+                            TaxonomyFormScreen(
+                                taxonomyIdArg = taxonomyId,
+                                navigateUp = { navController.popBackStack() },
+                                onDone = {
+                                    navController.navigate(Screen.TaxonomyBank.route) {
+                                        popUpTo(Screen.TaxonomyForm.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                }
                             )
                         } else {
                             LaunchedEffect(Unit) { navController.popBackStack() }
@@ -999,16 +1085,31 @@ fun CharityDeptNavHost(
                                     launchSingleTop = true
                                 }
                             },
-                            onOpenSession = { generalId ->
-                                navController.navigate(Screen.ChildAssessmentDetail.open(childId, generalId, mode)) {
+                            onOpenSession = { generalId, assessmentKey ->
+                                navController.navigate(
+                                    Screen.ChildAssessmentDetail.open(
+                                        childId = childId,
+                                        generalId = generalId,
+                                        mode = mode,
+                                        assessmentKey = assessmentKey
+                                    )
+                                ) {
                                     launchSingleTop = true
                                 }
                             },
-                            onStartNew = { newGeneralId ->
-                                navController.navigate(Screen.ChildAssessmentDetail.open(childId, newGeneralId, mode)) {
+                            onStartNew = { newGeneralId, assessmentKey ->
+                                navController.navigate(
+                                    Screen.ChildAssessmentDetail.open(
+                                        childId = childId,
+                                        generalId = newGeneralId,
+                                        mode = mode,
+                                        assessmentKey = assessmentKey
+                                    )
+                                ) {
                                     launchSingleTop = true
                                 }
                             }
+
                         )
                     }
 
@@ -1017,17 +1118,20 @@ fun CharityDeptNavHost(
                         arguments = listOf(
                             navArgument("childId") { type = NavType.StringType },
                             navArgument("generalId") { type = NavType.StringType },
-                            navArgument("mode") { type = NavType.StringType; defaultValue = "ALL" }
+                            navArgument("mode") { type = NavType.StringType; defaultValue = "ALL" },
+                            navArgument("assessmentKey") { type = NavType.StringType; defaultValue = "" }
                         )
                     ) { backStackEntry ->
                         val childId = backStackEntry.arguments?.getString("childId") ?: return@composable
                         val generalId = backStackEntry.arguments?.getString("generalId") ?: return@composable
                         val mode = backStackEntry.arguments?.getString("mode") ?: "ALL"
+                        val assessmentKey = backStackEntry.arguments?.getString("assessmentKey") ?: ""
 
                         ChildAssessmentDetailScreen(
                             childId = childId,
                             generalId = generalId,
                             mode = mode,
+                            assessmentKey = assessmentKey,
                             navigateUp = {
                                 val backRoute = when (mode) {
                                     "QA" -> Screen.ChildAssessmentHistory.qa(childId)
@@ -1039,7 +1143,6 @@ fun CharityDeptNavHost(
                                     launchSingleTop = true
                                 }
                             }
-
                         )
                     }
 

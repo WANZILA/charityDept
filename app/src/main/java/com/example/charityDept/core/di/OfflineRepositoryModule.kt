@@ -5,6 +5,8 @@ import com.example.charityDept.domain.repositories.offline.OfflineAssessmentQues
 import com.example.charityDept.domain.repositories.offline.OfflineAssessmentQuestionRepositoryImpl
 import com.example.charityDept.domain.repositories.offline.OfflineAssessmentRepository
 import com.example.charityDept.domain.repositories.offline.OfflineAssessmentRepositoryImpl
+import com.example.charityDept.domain.repositories.offline.OfflineAssessmentTaxonomyRepository
+import com.example.charityDept.domain.repositories.offline.OfflineAssessmentTaxonomyRepositoryImpl
 import com.example.charityDept.domain.repositories.offline.OfflineAttendanceRepository
 import com.example.charityDept.domain.repositories.offline.OfflineAttendanceRepositoryImpl
 import com.example.charityDept.domain.repositories.offline.OfflineChildrenRepository
@@ -66,6 +68,11 @@ abstract class OfflineRepositoryModule {
         impl: OfflineFamiliesRepositoryImpl
     ): OfflineFamiliesRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindOfflineAssessmentTaxonomyRepository(
+        impl: OfflineAssessmentTaxonomyRepositoryImpl
+    ): OfflineAssessmentTaxonomyRepository
 //    @Binds
 //    @Singleton
 //    abstract fun bindOfflineKpiRepository(impl: KpiRepositoryImpl): OfflineEventsRepository

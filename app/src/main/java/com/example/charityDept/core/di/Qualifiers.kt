@@ -62,6 +62,10 @@ annotation class FamilyRef
 @Retention(AnnotationRetention.BINARY)
 annotation class FamilyMembersRef
 
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class AssessmentTaxonomyRef
+
 
 
 

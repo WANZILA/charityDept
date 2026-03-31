@@ -4,6 +4,7 @@ import com.example.charityDept.core.Utils.GenerateId
 import com.example.charityDept.data.local.dao.AssessmentAnswerDao
 import com.example.charityDept.data.local.dao.AssessmentQuestionDao
 import com.example.charityDept.data.local.dao.AssessmentSessionRow
+import com.example.charityDept.data.local.dao.AssessmentToolOption
 import com.example.charityDept.data.model.AssessmentAnswer
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.Flow
@@ -13,20 +14,20 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.distinctUntilChanged
 interface OfflineAssessmentRepository {
 
+    fun observeAvailableAssessmentTools(mode: String): Flow<List<AssessmentToolOption>>
     fun observeSessionRows(childId: String, mode: String): Flow<List<AssessmentSessionRow>>
-    fun observeSession(childId: String, generalId: String): Flow<List<AssessmentAnswer>>
-//    fun observeSessionRows(childId: String): Flow<List<AssessmentSessionRow>>
-//    fun observeSession(childId: String, generalId: String): Flow<List<AssessmentAnswer>>
-    suspend fun upsertAnswerWithAudit(draft: AssessmentAnswer, editorUid: String)
+    fun observeSession(
+        childId: String,
+        generalId: String,
+        mode: String,
+        assessmentKey: String
+    ): Flow<List<AssessmentAnswer>>
 
+    suspend fun upsertAnswerWithAudit(draft: AssessmentAnswer, editorUid: String)
     suspend fun startNewAssessment(childId: String, editorUid: String): String
     suspend fun startNewSession(childId: String, mode: String, editorUid: String): String
-
     suspend fun softDeleteAnswer(answerId: String, editorUid: String)
     suspend fun softDeleteSession(childId: String, generalId: String, editorUid: String)
-
-    // cleanup-only
-    // cleanup-only
     suspend fun hardDeleteAnswerIfDeleted(answerId: String)
     suspend fun hardDeleteSessionIfDeleted(childId: String, generalId: String)
     suspend fun hardCleanupSoftDeletedSynced(): Int
@@ -38,14 +39,24 @@ class OfflineAssessmentRepositoryImpl @Inject constructor(
     private val questionDao: AssessmentQuestionDao, // /// ADDED
 ) : OfflineAssessmentRepository {
 
+    override fun observeAvailableAssessmentTools(mode: String): Flow<List<AssessmentToolOption>> =
+        questionDao.observeAvailableAssessmentTools(mode)
+            .distinctUntilChanged()
+
 //    override fun observeSessionRows(childId: String): Flow<List<AssessmentSessionRow>> =
 //        answerDao.observeSessionRows(childId)
 override fun observeSessionRows(childId: String, mode: String): Flow<List<AssessmentSessionRow>> =
     answerDao.observeSessionRows(childId, mode)
 
-    override fun observeSession(childId: String, generalId: String): Flow<List<AssessmentAnswer>> =
-        answerDao.observeSession(childId, generalId)
+    override fun observeSession(
+        childId: String,
+        generalId: String,
+        mode: String,
+        assessmentKey: String
+    ): Flow<List<AssessmentAnswer>> =
+        answerDao.observeSession(childId, generalId, mode, assessmentKey)
             .distinctUntilChanged()
+
 
     override suspend fun upsertAnswerWithAudit(draft: AssessmentAnswer, editorUid: String) {
         val now = Timestamp.now()

@@ -1,17 +1,43 @@
 package com.example.charityDept.presentation.screens.admin.questions
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Save
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+//import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.charityDept.data.model.AssessmentQuestion
+import com.example.charityDept.data.model.AssessmentTaxonomy
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,16 +52,11 @@ fun QuestionFormScreen(
     var loading by remember { mutableStateOf(false) }
 
     var assessmentKey by remember { mutableStateOf("") }
-    var assessmentLabel by remember { mutableStateOf("") }
-
-    var category by remember { mutableStateOf("") }
-    var subCategory by remember { mutableStateOf("") }
-    var question by remember { mutableStateOf("") }
-    var isActive by remember { mutableStateOf(true) }
-
-    var indexNumText by remember { mutableStateOf("0") }
     var categoryKey by remember { mutableStateOf("") }
     var subCategoryKey by remember { mutableStateOf("") }
+    var question by remember { mutableStateOf("") }
+    var isActive by remember { mutableStateOf(true) }
+    var indexNumText by remember { mutableStateOf("0") }
 
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
@@ -51,18 +72,33 @@ fun QuestionFormScreen(
             .sortedBy { it.second }
     }
 
-    val categories = remember(taxonomy, assessmentKey) {
+    val splits = remember(taxonomy, assessmentKey) {
         taxonomy
             .filter { it.assessmentKey == assessmentKey }
             .groupBy { it.categoryKey }
-            .map { (key, items) -> key to (items.firstOrNull()?.categoryLabel ?: key) }
+            .mapNotNull { (key, items) ->
+                val label = items.firstOrNull()?.categoryLabel.orEmpty()
+                if (key.isBlank()) null else key to label.ifBlank { key }
+            }
             .sortedBy { it.second }
     }
 
-    val subCategories = remember(taxonomy, assessmentKey, categoryKey) {
+    val leafRows = remember(taxonomy, assessmentKey, categoryKey) {
         taxonomy
             .filter { it.assessmentKey == assessmentKey && it.categoryKey == categoryKey }
             .sortedBy { it.indexNum }
+    }
+
+    val selectedAssessmentLabel = remember(assessments, assessmentKey) {
+        assessments.firstOrNull { it.first == assessmentKey }?.second.orEmpty()
+    }
+
+    val selectedSplitLabel = remember(splits, categoryKey) {
+        splits.firstOrNull { it.first == categoryKey }?.second.orEmpty()
+    }
+
+    val selectedLeaf: AssessmentTaxonomy? = remember(leafRows, subCategoryKey) {
+        leafRows.firstOrNull { it.subCategoryKey == subCategoryKey }
     }
 
     LaunchedEffect(questionIdArg) {
@@ -71,9 +107,6 @@ fun QuestionFormScreen(
         val existing = vm.loadOnce(id)
         if (existing != null) {
             assessmentKey = existing.assessmentKey
-            assessmentLabel = existing.assessmentLabel
-            category = existing.category
-            subCategory = existing.subCategory
             categoryKey = existing.categoryKey
             subCategoryKey = existing.subCategoryKey
             indexNumText = existing.indexNum.toString()
@@ -88,7 +121,7 @@ fun QuestionFormScreen(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("Delete Question?") },
             text = {
-                Text("This will soft-delete the question (it can be cleaned up later by the cleanup worker).")
+                Text("This will soft-delete the question.")
             },
             confirmButton = {
                 TextButton(
@@ -119,15 +152,16 @@ fun QuestionFormScreen(
                 actions = {
                     IconButton(
                         onClick = {
+                            val chosenLeaf = selectedLeaf ?: return@IconButton
                             scope.launch {
                                 val draft = AssessmentQuestion(
                                     questionId = questionIdArg ?: "",
-                                    assessmentKey = assessmentKey.trim(),
-                                    assessmentLabel = assessmentLabel.trim(),
-                                    categoryKey = categoryKey.trim(),
-                                    subCategoryKey = subCategoryKey.trim(),
-                                    category = category.trim(),
-                                    subCategory = subCategory.trim(),
+                                    assessmentKey = chosenLeaf.assessmentKey,
+                                    assessmentLabel = chosenLeaf.assessmentLabel,
+                                    categoryKey = chosenLeaf.categoryKey,
+                                    subCategoryKey = chosenLeaf.subCategoryKey,
+                                    category = chosenLeaf.categoryLabel,
+                                    subCategory = chosenLeaf.subCategoryLabel,
                                     indexNum = indexNumText.trim().toIntOrNull() ?: 0,
                                     question = question.trim(),
                                     isActive = isActive
@@ -135,10 +169,12 @@ fun QuestionFormScreen(
                                 vm.upsert(draft) { id -> onDone(id) }
                             }
                         },
-                        enabled = assessmentKey.isNotBlank() &&
-                                categoryKey.isNotBlank() &&
-                                subCategoryKey.isNotBlank() &&
-                                question.isNotBlank()
+                        enabled =
+                            assessmentKey.isNotBlank() &&
+                                    categoryKey.isNotBlank() &&
+                                    subCategoryKey.isNotBlank() &&
+                                    selectedLeaf != null &&
+                                    question.isNotBlank()
                     ) {
                         Icon(Icons.Outlined.Save, contentDescription = "Save")
                     }
@@ -159,7 +195,9 @@ fun QuestionFormScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+            if (loading) {
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+            }
 
             var assessmentExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
@@ -167,10 +205,10 @@ fun QuestionFormScreen(
                 onExpandedChange = { assessmentExpanded = !assessmentExpanded }
             ) {
                 OutlinedTextField(
-                    value = assessmentLabel,
+                    value = selectedAssessmentLabel,
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Main Assessment") },
+                    label = { Text("Assessment Tool") },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = assessmentExpanded) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
@@ -183,13 +221,8 @@ fun QuestionFormScreen(
                             text = { Text(label) },
                             onClick = {
                                 assessmentKey = key
-                                assessmentLabel = label
-
                                 categoryKey = ""
-                                category = ""
                                 subCategoryKey = ""
-                                subCategory = ""
-
                                 assessmentExpanded = false
                             }
                         )
@@ -197,68 +230,67 @@ fun QuestionFormScreen(
                 }
             }
 
-            var catExpanded by remember { mutableStateOf(false) }
+            var splitExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
-                expanded = catExpanded,
+                expanded = splitExpanded,
                 onExpandedChange = {
-                    if (assessmentKey.isNotBlank()) catExpanded = !catExpanded
+                    if (assessmentKey.isNotBlank()) splitExpanded = !splitExpanded
                 }
             ) {
                 OutlinedTextField(
-                    value = category,
+                    value = selectedSplitLabel,
                     onValueChange = {},
                     readOnly = true,
                     enabled = assessmentKey.isNotBlank(),
-                    label = { Text("Category") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = catExpanded) },
+                    label = { Text("Split") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = splitExpanded) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
-                    expanded = catExpanded,
-                    onDismissRequest = { catExpanded = false }
+                    expanded = splitExpanded,
+                    onDismissRequest = { splitExpanded = false }
                 ) {
-                    categories.forEach { (key, label) ->
+                    splits.forEach { (key, label) ->
                         DropdownMenuItem(
                             text = { Text(label) },
                             onClick = {
                                 categoryKey = key
-                                category = label
                                 subCategoryKey = ""
-                                subCategory = ""
-                                catExpanded = false
+                                splitExpanded = false
                             }
                         )
                     }
                 }
             }
 
-            var subExpanded by remember { mutableStateOf(false) }
+            var leafExpanded by remember { mutableStateOf(false) }
             ExposedDropdownMenuBox(
-                expanded = subExpanded,
+                expanded = leafExpanded,
                 onExpandedChange = {
-                    if (assessmentKey.isNotBlank() && categoryKey.isNotBlank()) subExpanded = !subExpanded
+                    if (assessmentKey.isNotBlank() && categoryKey.isNotBlank()) {
+                        leafExpanded = !leafExpanded
+                    }
                 }
             ) {
                 OutlinedTextField(
-                    value = subCategory,
+                    value = selectedLeaf?.subCategoryLabel.orEmpty(),
                     onValueChange = {},
                     readOnly = true,
                     enabled = assessmentKey.isNotBlank() && categoryKey.isNotBlank(),
-                    label = { Text("Sub Category") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = subExpanded) },
+                    label = { Text("Category / Subcategory") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = leafExpanded) },
                     modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
                 ExposedDropdownMenu(
-                    expanded = subExpanded,
-                    onDismissRequest = { subExpanded = false }
+                    expanded = leafExpanded,
+                    onDismissRequest = { leafExpanded = false }
                 ) {
-                    subCategories.forEach { t ->
+                    leafRows.forEach { row ->
                         DropdownMenuItem(
-                            text = { Text(t.subCategoryLabel) },
+                            text = { Text(row.subCategoryLabel) },
                             onClick = {
-                                subCategoryKey = t.subCategoryKey
-                                subCategory = t.subCategoryLabel
-                                subExpanded = false
+                                subCategoryKey = row.subCategoryKey
+                                leafExpanded = false
                             }
                         )
                     }
@@ -268,7 +300,7 @@ fun QuestionFormScreen(
             OutlinedTextField(
                 value = question,
                 onValueChange = { question = it },
-                label = { Text("Question") },
+                label = { Text("Prompt / Item") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3
             )
@@ -276,13 +308,16 @@ fun QuestionFormScreen(
             OutlinedTextField(
                 value = indexNumText,
                 onValueChange = { indexNumText = it },
-                label = { Text("Order (indexNum)") },
+                label = { Text("Question Order (indexNum)") },
                 modifier = Modifier.fillMaxWidth()
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("Active")
-                Switch(checked = isActive, onCheckedChange = { isActive = it })
+                Switch(
+                    checked = isActive,
+                    onCheckedChange = { isActive = it }
+                )
             }
         }
     }

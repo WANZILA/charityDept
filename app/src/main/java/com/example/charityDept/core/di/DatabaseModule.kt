@@ -120,7 +120,7 @@ object DatabaseModule {
             .also { db ->
                 CoroutineScope(Dispatchers.IO).launch {
                     UgAdminSeeder(context, db.ugAdminDao()).seedIfEmpty()
-                    AssessmentTaxonomySeeder(db.assessmentTaxonomyDao()).seedIfEmpty()
+//                    AssessmentTaxonomySeeder(db.assessmentTaxonomyDao()).seedIfEmpty()
                 }
             }
 //        fun provideDb(@ApplicationContext context: Context): AppDatabase =

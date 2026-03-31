@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.charityDept.data.local.dao.AssessmentAnswerDao // /// ADDED
 import com.example.charityDept.data.local.dao.AssessmentQuestionDao
+import com.example.charityDept.data.local.dao.AssessmentTaxonomyDao
 import com.example.charityDept.data.local.dao.AttendanceDao
 import com.example.charityDept.data.local.dao.ChildDao
 import com.example.charityDept.data.local.dao.EventDao
@@ -29,7 +30,9 @@ class CleanerWorker @AssistedInject constructor(
     private val eventDao: EventDao,
     private val attendanceDao: AttendanceDao,
     private val assessmentAnswerDao: AssessmentAnswerDao, // /// ADDED
-    private val assessmentQuestionDao: AssessmentQuestionDao // /// ADDED
+    private val assessmentQuestionDao: AssessmentQuestionDao ,// /// ADDED,
+//    private val assessmentQuestionDao: AssessmentQuestionDao,
+    private val assessmentTaxonomyDao: AssessmentTaxonomyDao
 
 ) : CoroutineWorker(appContext, params) {
 
@@ -43,6 +46,8 @@ class CleanerWorker @AssistedInject constructor(
         const val OUT_DELETED_ASSESSMENT_ANSWERS = "deleted_assessment_answers" // /// ADDED
         const val OUT_DELETED_ASSESSMENT_QUESTIONS = "deleted_assessment_questions" // /// ADDED
 
+        const val OUT_DELETED_ASSESSMENT_TAXONOMY = "deleted_assessment_taxonomy"
+
         const val OUT_DELETED_TOTAL = "deleted_total"
     }
 
@@ -54,6 +59,7 @@ class CleanerWorker @AssistedInject constructor(
         fun eventDao(): EventDao
         fun assessmentAnswerDao(): AssessmentAnswerDao // /// ADDED
         fun assessmentQuestionDao(): AssessmentQuestionDao // /// ADDED
+        fun assessmentTaxonomyDao(): AssessmentTaxonomyDao
 
     }
 
@@ -64,7 +70,8 @@ class CleanerWorker @AssistedInject constructor(
         EntryPointAccessors.fromApplication(appContext, WorkerDeps::class.java).eventDao(),
         EntryPointAccessors.fromApplication(appContext, WorkerDeps::class.java).attendanceDao(),
         EntryPointAccessors.fromApplication(appContext, WorkerDeps::class.java).assessmentAnswerDao(), // /// ADDED
-                EntryPointAccessors.fromApplication(appContext, WorkerDeps::class.java).assessmentQuestionDao()
+        EntryPointAccessors.fromApplication(appContext, WorkerDeps::class.java).assessmentQuestionDao(),
+        EntryPointAccessors.fromApplication(appContext, WorkerDeps::class.java).assessmentTaxonomyDao()
 
     )
 
@@ -86,10 +93,15 @@ class CleanerWorker @AssistedInject constructor(
             val deletedEvents = eventDao.hardDeleteOldTombstones(cutoff)
             val deletedAssessmentAnswers = assessmentAnswerDao.hardDeleteOldTombstones(cutoff) // /// ADDED
             val deletedAssessmentQuestions = assessmentQuestionDao.hardDeleteOldTombstones(cutoff) // /// ADDED
+            val deletedAssessmentTaxonomy = assessmentTaxonomyDao.hardDeleteOldTombstones(cutoff)
 
             val deletedTotal =
-                deletedChildren + deletedAttendances + deletedEvents + deletedAssessmentAnswers + deletedAssessmentQuestions
-
+                deletedChildren +
+                        deletedAttendances +
+                        deletedEvents +
+                        deletedAssessmentAnswers +
+                        deletedAssessmentQuestions +
+                        deletedAssessmentTaxonomy
             Timber.i(
                 "CleanerWorker: deleted children=%d attendances=%d events=%d assessment_answers=%d deletedAssessmentQuestions=%d total=%d",
                 deletedChildren, deletedAttendances, deletedEvents, deletedAssessmentAnswers, deletedAssessmentQuestions, deletedTotal
@@ -102,6 +114,7 @@ class CleanerWorker @AssistedInject constructor(
                 .putInt(OUT_DELETED_ASSESSMENT_ANSWERS, deletedAssessmentAnswers) // /// ADDED
                 .putInt(OUT_DELETED_ASSESSMENT_QUESTIONS, deletedAssessmentQuestions)
                 .putInt(OUT_DELETED_TOTAL, deletedTotal)
+                .putInt(OUT_DELETED_ASSESSMENT_TAXONOMY, deletedAssessmentTaxonomy)
                 .build()
 
             Timber.i("CleanerWorker: done")

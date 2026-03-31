@@ -161,6 +161,12 @@ object FirestoreModule {
     @FamilyMembersRef
     fun provideFamilyMembersCollection(db: FirebaseFirestore): CollectionReference =
         db.collection("family_members")
+
+    @Provides
+    @Singleton
+    @AssessmentTaxonomyRef
+    fun provideAssessmentTaxonomyRef(firestore: FirebaseFirestore): CollectionReference =
+        firestore.collection("assessment_taxonomy")
 //    @Provides
 //    @Singleton
 //    @AssessmentQuestionsRef
