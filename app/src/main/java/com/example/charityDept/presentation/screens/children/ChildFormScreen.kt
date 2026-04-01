@@ -585,30 +585,53 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
 //        )
 
         // ---- Child main address ----
-//        if (uiState.country == Country.UGANDA) {
-//            UgandaAddressBlock(
-//                title = "Child — Resettlement Address",
-//                picker = vm.ugResettlementPicker,
-//                region = uiState.region,
-//                district = uiState.district,
-//                county = uiState.county,
-//                subCounty = uiState.subCounty,
-//                parish = uiState.parish,
-//                village = uiState.village
-//            )
-//        } else {
-//            AddressBlock(
-//                title = "Child — Resettlement Address",
-//                country = uiState.country,
-//                onCountry = { vm.ui = vm.ui.copy(country = it) },
-//                region = uiState.region, onRegion = { vm.ui = vm.ui.copy(region = it) },
-//                district = uiState.district, onDistrict = { vm.ui = vm.ui.copy(district = it) },
-//                county = uiState.county, onCounty = { vm.ui = vm.ui.copy(county = it) },
-//                subCounty = uiState.subCounty, onSubCounty = { vm.ui = vm.ui.copy(subCounty = it) },
-//                parish = uiState.parish, onParish = { vm.ui = vm.ui.copy(parish = it) },
-//                village = uiState.village, onVillage = { vm.ui = vm.ui.copy(village = it) }
-//            )
-//        }
+        // ---- Child main address ----
+        if (uiState.country == Country.UGANDA) {
+            UgandaAddressBlock(
+                title = "Child — Resettlement Address",
+                country = uiState.country,
+                onCountry = { newCountry ->
+                    vm.ui = vm.ui.copy(
+                        country = newCountry,
+                        region = "",
+                        district = "",
+                        county = "",
+                        subCounty = "",
+                        parish = "",
+                        village = ""
+                    )
+                },
+                picker = vm.ugResettlementPicker,
+                region = uiState.region,
+                district = uiState.district,
+                county = uiState.county,
+                subCounty = uiState.subCounty,
+                parish = uiState.parish,
+                village = uiState.village
+            )
+        } else {
+            AddressBlock(
+                title = "Child — Resettlement Address",
+                country = uiState.country,
+                onCountry = { newCountry ->
+                    vm.ui = vm.ui.copy(
+                        country = newCountry,
+                        region = "",
+                        district = "",
+                        county = "",
+                        subCounty = "",
+                        parish = "",
+                        village = ""
+                    )
+                },
+                region = uiState.region, onRegion = { vm.ui = vm.ui.copy(region = it) },
+                district = uiState.district, onDistrict = { vm.ui = vm.ui.copy(district = it) },
+                county = uiState.county, onCounty = { vm.ui = vm.ui.copy(county = it) },
+                subCounty = uiState.subCounty, onSubCounty = { vm.ui = vm.ui.copy(subCounty = it) },
+                parish = uiState.parish, onParish = { vm.ui = vm.ui.copy(parish = it) },
+                village = uiState.village, onVillage = { vm.ui = vm.ui.copy(village = it) }
+            )
+        }
 
 //        Divider(Modifier.padding(vertical = 8.dp))
         if (uiState.program == Program.BROTHERS_AND_SISTERS_OF_ZION) {
@@ -666,6 +689,18 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             if (uiState.member1AncestralCountry == Country.UGANDA) {
                 UgandaAddressBlock(
                     title = "Member 1 — Ancestral Home",
+                    country = uiState.member1AncestralCountry,
+                    onCountry = { newCountry ->
+                        vm.ui = vm.ui.copy(
+                            member1AncestralCountry = newCountry,
+                            member1AncestralRegion = "",
+                            member1AncestralDistrict = "",
+                            member1AncestralCounty = "",
+                            member1AncestralSubCounty = "",
+                            member1AncestralParish = "",
+                            member1AncestralVillage = ""
+                        )
+                    },
                     picker = vm.ugM1AncestralPicker,
                     region = uiState.member1AncestralRegion,
                     district = uiState.member1AncestralDistrict,
@@ -706,6 +741,18 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             if (uiState.member1RentalCountry == Country.UGANDA) {
                 UgandaAddressBlock(
                     title = "Member 1 — Rental Home",
+                    country = uiState.member1RentalCountry,
+                    onCountry = { newCountry ->
+                        vm.ui = vm.ui.copy(
+                            member1RentalCountry = newCountry,
+                            member1RentalRegion = "",
+                            member1RentalDistrict = "",
+                            member1RentalCounty = "",
+                            member1RentalSubCounty = "",
+                            member1RentalParish = "",
+                            member1RentalVillage = ""
+                        )
+                    },
                     picker = vm.ugM1RentalPicker,
                     region = uiState.member1RentalRegion,
                     district = uiState.member1RentalDistrict,
@@ -771,6 +818,18 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             if (uiState.member2AncestralCountry == Country.UGANDA) {
                 UgandaAddressBlock(
                     title = "Member 2 — Ancestral Home",
+                    country = uiState.member2AncestralCountry,
+                    onCountry = { newCountry ->
+                        vm.ui = vm.ui.copy(
+                            member2AncestralCountry = newCountry,
+                            member2AncestralRegion = "",
+                            member2AncestralDistrict = "",
+                            member2AncestralCounty = "",
+                            member2AncestralSubCounty = "",
+                            member2AncestralParish = "",
+                            member2AncestralVillage = ""
+                        )
+                    },
                     picker = vm.ugM2AncestralPicker,
                     region = uiState.member2AncestralRegion,
                     district = uiState.member2AncestralDistrict,
@@ -810,6 +869,18 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             if (uiState.member2RentalCountry == Country.UGANDA) {
                 UgandaAddressBlock(
                     title = "Member 2 — Rental Home",
+                    country = uiState.member2RentalCountry,
+                    onCountry = { newCountry ->
+                        vm.ui = vm.ui.copy(
+                            member2RentalCountry = newCountry,
+                            member2RentalRegion = "",
+                            member2RentalDistrict = "",
+                            member2RentalCounty = "",
+                            member2RentalSubCounty = "",
+                            member2RentalParish = "",
+                            member2RentalVillage = ""
+                        )
+                    },
                     picker = vm.ugM2RentalPicker,
                     region = uiState.member2RentalRegion,
                     district = uiState.member2RentalDistrict,
@@ -875,6 +946,18 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             if (uiState.member3AncestralCountry == Country.UGANDA) {
                 UgandaAddressBlock(
                     title = "Member 3 — Ancestral Home",
+                    country = uiState.member3AncestralCountry,
+                    onCountry = { newCountry ->
+                        vm.ui = vm.ui.copy(
+                            member3AncestralCountry = newCountry,
+                            member3AncestralRegion = "",
+                            member3AncestralDistrict = "",
+                            member3AncestralCounty = "",
+                            member3AncestralSubCounty = "",
+                            member3AncestralParish = "",
+                            member3AncestralVillage = ""
+                        )
+                    },
                     picker = vm.ugM3AncestralPicker,
                     region = uiState.member3AncestralRegion,
                     district = uiState.member3AncestralDistrict,
@@ -914,6 +997,18 @@ private fun StepFamily(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             if (uiState.member3RentalCountry == Country.UGANDA) {
                 UgandaAddressBlock(
                     title = "Member 3 — Rental Home",
+                    country = uiState.member3RentalCountry,
+                    onCountry = { newCountry ->
+                        vm.ui = vm.ui.copy(
+                            member3RentalCountry = newCountry,
+                            member3RentalRegion = "",
+                            member3RentalDistrict = "",
+                            member3RentalCounty = "",
+                            member3RentalSubCounty = "",
+                            member3RentalParish = "",
+                            member3RentalVillage = ""
+                        )
+                    },
                     picker = vm.ugM3RentalPicker,
                     region = uiState.member3RentalRegion,
                     district = uiState.member3RentalDistrict,
@@ -1265,6 +1360,8 @@ private fun PickerField(
 @Composable
 private fun UgandaAddressBlock(
     title: String,
+    country: Country,
+    onCountry: (Country) -> Unit,
     picker: ChildFormViewModel.UgandaAddressPicker,
     region: String,
     district: String,
@@ -1272,15 +1369,65 @@ private fun UgandaAddressBlock(
     subCounty: String,
     parish: String,
     village: String
-) {
+)  {
     var showRegion by remember { mutableStateOf(false) }
     var showDistrict by remember { mutableStateOf(false) }
     var showCounty by remember { mutableStateOf(false) }
     var showSubCounty by remember { mutableStateOf(false) }
     var showParish by remember { mutableStateOf(false) }
     var showVillage by remember { mutableStateOf(false) }
+    var showDistrictSearch by remember { mutableStateOf(false) }
+    var showVillageSearch by remember { mutableStateOf(false) }
 
     Text(title, style = MaterialTheme.typography.titleSmall)
+
+    EnumDropdown(
+        title = "Country",
+        selected = country,
+        values = Country.entries,
+        onSelected = onCountry,
+        labelFor = ::labelForCountry,
+        iconFor = { Icons.Outlined.Public }
+    )
+
+    // Region
+    PickerField(
+        label = "Search District",
+        value = district,
+        enabled = true,
+        placeholder = "Search district and fill region",
+        onClick = { showDistrictSearch = true }
+    )
+    if (showDistrictSearch) {
+        PickerDialog(
+            title = "Search District",
+            feature = picker.districtSearchPicker,
+            onPicked = {
+                picker.onDistrictPicked(it)
+                showDistrictSearch = false
+            },
+            onDismiss = { showDistrictSearch = false }
+        )
+    }
+
+    PickerField(
+        label = "Search Village",
+        value = village,
+        enabled = true,
+        placeholder = "Search village and fill full hierarchy",
+        onClick = { showVillageSearch = true }
+    )
+    if (showVillageSearch) {
+        PickerDialog(
+            title = "Search Village",
+            feature = picker.villageSearchPicker,
+            onPicked = {
+                picker.onVillagePicked(it)
+                showVillageSearch = false
+            },
+            onDismiss = { showVillageSearch = false }
+        )
+    }
 
     // Region
     PickerField(

@@ -7,7 +7,29 @@ import androidx.room.Query
 import com.example.charityDept.core.Utils.picker.PickerOption
 import com.example.charityDept.data.model.*
 import kotlinx.coroutines.flow.Flow
+import androidx.room.Embedded
 
+data class DistrictRegionLookup(
+    val districtCode: String,
+    val districtName: String,
+    val regionCode: String,
+    val regionName: String
+)
+
+data class VillageHierarchyLookup(
+    val villageCode: String,
+    val villageName: String,
+    val parishCode: String,
+    val parishName: String,
+    val subCountyCode: String,
+    val subCountyName: String,
+    val countyCode: String,
+    val countyName: String,
+    val districtCode: String,
+    val districtName: String,
+    val regionCode: String,
+    val regionName: String
+)
 @Dao
 interface UgAdminDao {
 
@@ -30,6 +52,56 @@ interface UgAdminDao {
     @Query("SELECT * FROM ug_villages WHERE parishCode = :parishCode ORDER BY villageName")
     fun watchVillages(parishCode: String): Flow<List<UgVillageEntity>>
 
+
+    @Query("SELECT * FROM ug_districts ORDER BY districtName")
+    fun watchAllDistricts(): Flow<List<UgDistrictEntity>>
+
+    @Query("SELECT * FROM ug_villages ORDER BY villageName")
+    fun watchAllVillages(): Flow<List<UgVillageEntity>>
+
+    @Query("""
+        SELECT
+            d.districtCode AS districtCode,
+            d.districtName AS districtName,
+            r.regionCode AS regionCode,
+            r.regionName AS regionName
+        FROM ug_districts d
+        INNER JOIN ug_regions r
+            ON r.regionCode = d.regionCode
+        WHERE d.districtCode = :districtCode
+        LIMIT 1
+    """)
+    suspend fun getDistrictRegionByDistrictCode(districtCode: String): DistrictRegionLookup?
+
+    @Query("""
+        SELECT
+            v.villageCode AS villageCode,
+            v.villageName AS villageName,
+            p.parishCode AS parishCode,
+            p.parishName AS parishName,
+            s.subCountyCode AS subCountyCode,
+            s.subCountyName AS subCountyName,
+            c.countyCode AS countyCode,
+            c.countyName AS countyName,
+            d.districtCode AS districtCode,
+            d.districtName AS districtName,
+            r.regionCode AS regionCode,
+            r.regionName AS regionName
+        FROM ug_villages v
+        INNER JOIN ug_parishes p
+            ON p.parishCode = v.parishCode
+        INNER JOIN ug_subcounties s
+            ON s.subCountyCode = p.subCountyCode
+        INNER JOIN ug_counties c
+            ON c.countyCode = s.countyCode
+        INNER JOIN ug_districts d
+            ON d.districtCode = c.districtCode
+        INNER JOIN ug_regions r
+            ON r.regionCode = d.regionCode
+        WHERE v.villageCode = :villageCode
+        LIMIT 1
+    """)
+    suspend fun getVillageHierarchyByVillageCode(villageCode: String): VillageHierarchyLookup?
     // --- seed helpers (keep suspend) ---
     @Query("SELECT COUNT(*) FROM ug_regions")
     suspend fun regionsCount(): Int

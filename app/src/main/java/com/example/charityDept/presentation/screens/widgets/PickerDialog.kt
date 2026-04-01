@@ -69,7 +69,7 @@ fun PickerDialog(
                                     .fillMaxWidth()
                                     .padding(bottom = 8.dp),
                                 singleLine = true,
-                                enabled = false
+                                enabled = true
                             )
                         }
                     }

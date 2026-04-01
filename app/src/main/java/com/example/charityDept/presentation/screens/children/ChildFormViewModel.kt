@@ -50,7 +50,7 @@ class ChildFormViewModel @Inject constructor(
      * Your old version was wiping region/district/etc. because it emitted "" for fields you didn't pick.
      */
     class UgandaAddressPicker(
-        scope: CoroutineScope,
+        private val scope: CoroutineScope,
         private val repo: OfflineUgAdminRepository,
         private val setAddress: (
             region: String,
@@ -101,6 +101,20 @@ class ChildFormViewModel @Inject constructor(
                 else repo.watchDistricts(rc).map { list ->
                     list.map { PickerOption(id = it.districtCode, name = it.districtName) }
                 }
+            }
+        )
+
+        val districtSearchPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = repo.watchAllDistricts().map { list ->
+                list.map { PickerOption(id = it.districtCode, name = it.districtName) }
+            }
+        )
+
+        val villageSearchPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = repo.watchAllVillages().map { list ->
+                list.map { PickerOption(id = it.villageCode, name = it.villageName) }
             }
         )
 
@@ -162,19 +176,42 @@ class ChildFormViewModel @Inject constructor(
         }
 
         fun onDistrictPicked(opt: PickerOption) {
-            selectedDistrictCode.value = opt.id
-            selectedCountyCode.value = null
-            selectedSubCountyCode.value = null
-            selectedParishCode.value = null
+            scope.launch {
+                val lookup = repo.getDistrictRegionByDistrictCode(opt.id)
 
-            districtName = opt.name
-            countyName = ""
-            subCountyName = ""
-            parishName = ""
-            villageName = ""
+                selectedRegionCode.value = lookup?.regionCode ?: selectedRegionCode.value
+                selectedDistrictCode.value = opt.id
+                selectedCountyCode.value = null
+                selectedSubCountyCode.value = null
+                selectedParishCode.value = null
 
-            emit()
+                if (!lookup?.regionName.isNullOrBlank()) {
+                    regionName = lookup!!.regionName
+                }
+                districtName = lookup?.districtName ?: opt.name
+                countyName = ""
+                subCountyName = ""
+                parishName = ""
+                villageName = ""
+
+                districtSearchPicker.clearQuery()
+                emit()
+            }
         }
+//        fun onDistrictPicked(opt: PickerOption) {
+//            selectedDistrictCode.value = opt.id
+//            selectedCountyCode.value = null
+//            selectedSubCountyCode.value = null
+//            selectedParishCode.value = null
+//
+//            districtName = opt.name
+//            countyName = ""
+//            subCountyName = ""
+//            parishName = ""
+//            villageName = ""
+//
+//            emit()
+//        }
 
         fun onCountyPicked(opt: PickerOption) {
             selectedCountyCode.value = opt.id
@@ -210,9 +247,37 @@ class ChildFormViewModel @Inject constructor(
         }
 
         fun onVillagePicked(opt: PickerOption) {
-            villageName = opt.name
-            emit()
+            scope.launch {
+                val lookup = repo.getVillageHierarchyByVillageCode(opt.id)
+
+                if (lookup == null) {
+                    villageName = opt.name
+                    villageSearchPicker.clearQuery()
+                    emit()
+                    return@launch
+                }
+
+                selectedRegionCode.value = lookup.regionCode
+                selectedDistrictCode.value = lookup.districtCode
+                selectedCountyCode.value = lookup.countyCode
+                selectedSubCountyCode.value = lookup.subCountyCode
+                selectedParishCode.value = lookup.parishCode
+
+                regionName = lookup.regionName
+                districtName = lookup.districtName
+                countyName = lookup.countyName
+                subCountyName = lookup.subCountyName
+                parishName = lookup.parishName
+                villageName = lookup.villageName
+
+                villageSearchPicker.clearQuery()
+                emit()
+            }
         }
+//        fun onVillagePicked(opt: PickerOption) {
+//            villageName = opt.name
+//            emit()
+//        }
 
         fun clearAll() {
             selectedRegionCode.value = null

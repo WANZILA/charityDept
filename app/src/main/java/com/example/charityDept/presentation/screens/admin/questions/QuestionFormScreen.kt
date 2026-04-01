@@ -102,7 +102,7 @@ fun QuestionFormScreen(
         when {
             assessmentKey.isBlank() -> ""
             assessmentKey == initialAssessmentKeyArg && !initialAssessmentLabelArg.isNullOrBlank() ->
-                initialAssessmentLabelArg
+                initialAssessmentLabelArg.replace("+", " ").uppercase()
             else ->
                 assessments.firstOrNull { it.first == assessmentKey }?.second.orEmpty()
         }

@@ -3,7 +3,8 @@ package com.example.charityDept.domain.repositories.offline
 import com.example.charityDept.core.Utils.picker.PickerOption
 import com.example.charityDept.data.model.*
 import kotlinx.coroutines.flow.Flow
-
+import com.example.charityDept.data.local.dao.DistrictRegionLookup
+import com.example.charityDept.data.local.dao.VillageHierarchyLookup
 interface OfflineUgAdminRepository {
 
     // LIVE picker streams
@@ -14,6 +15,12 @@ interface OfflineUgAdminRepository {
     fun watchParishes(subcountyCode: String): Flow<List<UgParishEntity>>
     fun watchVillages(parishCode: String): Flow<List<UgVillageEntity>>
 
+    suspend fun getDistrictRegionByDistrictCode(districtCode: String): DistrictRegionLookup?
+    suspend fun getVillageHierarchyByVillageCode(villageCode: String): VillageHierarchyLookup?
+
+
+    fun watchAllDistricts(): Flow<List<UgDistrictEntity>>
+    fun watchAllVillages(): Flow<List<UgVillageEntity>>
     // seed helpers
     suspend fun regionsCount(): Int
     suspend fun districtsCount(): Int

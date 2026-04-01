@@ -6,7 +6,8 @@ import com.example.charityDept.data.model.*
 import com.example.charityDept.domain.repositories.offline.OfflineUgAdminRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
-
+import com.example.charityDept.data.local.dao.DistrictRegionLookup
+import com.example.charityDept.data.local.dao.VillageHierarchyLookup
 class OfflineUgAdminRepositoryImpl @Inject constructor(
     private val dao: UgAdminDao
 ) : OfflineUgAdminRepository {
@@ -17,6 +18,9 @@ class OfflineUgAdminRepositoryImpl @Inject constructor(
     override fun watchSubcounties(countyCode: String): Flow<List<UgSubCountyEntity>> = dao.watchSubcounties(countyCode)
     override fun watchParishes(subcountyCode: String): Flow<List<UgParishEntity>> = dao.watchParishes(subcountyCode)
     override fun watchVillages(parishCode: String): Flow<List<UgVillageEntity>> = dao.watchVillages(parishCode)
+
+    override fun watchAllDistricts(): Flow<List<UgDistrictEntity>> = dao.watchAllDistricts()
+    override fun watchAllVillages(): Flow<List<UgVillageEntity>> = dao.watchAllVillages()
 
     override suspend fun regionsCount(): Int = dao.regionsCount()
     override suspend fun districtsCount(): Int = dao.districtsCount()
@@ -31,6 +35,19 @@ class OfflineUgAdminRepositoryImpl @Inject constructor(
     override suspend fun insertSubcounties(items: List<UgSubCountyEntity>) = dao.insertSubcounties(items)
     override suspend fun insertParishes(items: List<UgParishEntity>) = dao.insertParishes(items)
     override suspend fun insertVillages(items: List<UgVillageEntity>) = dao.insertVillages(items)
+
+
+    override suspend fun getDistrictRegionByDistrictCode(districtCode: String): DistrictRegionLookup? {
+        val code = districtCode.trim()
+        if (code.isEmpty()) return null
+        return dao.getDistrictRegionByDistrictCode(code)
+    }
+
+    override suspend fun getVillageHierarchyByVillageCode(villageCode: String): VillageHierarchyLookup? {
+        val code = villageCode.trim()
+        if (code.isEmpty()) return null
+        return dao.getVillageHierarchyByVillageCode(code)
+    }
 
     // =========================
     // Streets from children.street (Room only)
