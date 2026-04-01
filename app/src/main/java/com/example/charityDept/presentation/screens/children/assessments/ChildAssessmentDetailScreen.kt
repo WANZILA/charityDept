@@ -93,6 +93,8 @@ fun ChildAssessmentDetailScreen(
 
     var deleteTarget by remember { mutableStateOf<AssessmentAnswer?>(null) }
 
+    var sessionRecommendation by remember(childId, generalId, mode) { mutableStateOf("") }
+
     LaunchedEffect(ui.items) {
         val incomingIds = ui.items.asSequence().map { it.answerId }.toHashSet()
 
@@ -111,6 +113,13 @@ fun ChildAssessmentDetailScreen(
                 )
             )
         }
+
+        if (sessionRecommendation.isBlank()) {
+            sessionRecommendation = ui.items
+                .firstOrNull { it.recommendation.isNotBlank() }
+                ?.recommendation
+                .orEmpty()
+        }
     }
 
     fun buildSaveList(): List<AssessmentAnswer> {
@@ -121,7 +130,8 @@ fun ChildAssessmentDetailScreen(
             } else {
                 base.copy(
                     answer = d.answer,
-                    recommendation = d.recommendation,
+                    recommendation = sessionRecommendation,
+//                    recommendation = d.recommendation,
                     notes = d.notes,
                     score = if (isObservationMode) 0 else d.score
                 )
@@ -213,7 +223,7 @@ fun ChildAssessmentDetailScreen(
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.weight(1f)
             ) {
                 itemsIndexed(
                     items = ui.items,
@@ -272,15 +282,15 @@ fun ChildAssessmentDetailScreen(
 
                             Spacer(Modifier.height(10.dp))
 
-                            OutlinedTextField(
-                                value = draft.recommendation,
-                                onValueChange = { v ->
-                                    drafts[item.answerId] = draft.copy(recommendation = v)
-                                },
-                                label = { Text(recommendationLabel) },
-                                modifier = Modifier.fillMaxWidth(),
-                                minLines = 2
-                            )
+//                            OutlinedTextField(
+//                                value = draft.recommendation,
+//                                onValueChange = { v ->
+//                                    drafts[item.answerId] = draft.copy(recommendation = v)
+//                                },
+//                                label = { Text(recommendationLabel) },
+//                                modifier = Modifier.fillMaxWidth(),
+//                                minLines = 2
+//                            )
 
                             if (!isObservationMode) {
                                 Spacer(Modifier.height(10.dp))
@@ -304,18 +314,28 @@ fun ChildAssessmentDetailScreen(
 
                             Spacer(Modifier.height(10.dp))
 
-                            OutlinedTextField(
-                                value = draft.notes,
-                                onValueChange = { v ->
-                                    drafts[item.answerId] = draft.copy(notes = v)
-                                },
-                                label = { Text(notesLabel) },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+//                            OutlinedTextField(
+//                                value = draft.notes,
+//                                onValueChange = { v ->
+//                                    drafts[item.answerId] = draft.copy(notes = v)
+//                                },
+//                                label = { Text(notesLabel) },
+//                                modifier = Modifier.fillMaxWidth()
+//                            )
                         }
                     }
                 }
             }
+
+            Spacer(Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = sessionRecommendation,
+                onValueChange = { v -> sessionRecommendation = v },
+                label = { Text(recommendationLabel) },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
         }
     }
 }

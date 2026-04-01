@@ -57,7 +57,7 @@ class CharityDeptApp : Application(), Configuration.Provider {
         AttendencesSeedScheduler.enqueue(this)
         ChildrenSeedScheduler.enqueue(this)
 
-        AssessmentTaxonomySeedScheduler.enqueue(this)
+//        AssessmentTaxonomySeedScheduler.enqueue(this)
 
 
         // Firestore persistent cache BEFORE any Firestore access
