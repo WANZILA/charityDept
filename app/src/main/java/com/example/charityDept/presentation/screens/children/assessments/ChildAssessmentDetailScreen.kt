@@ -188,19 +188,22 @@ fun ChildAssessmentDetailScreen(
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    val toSave = buildSaveList()
-                    vm.saveAllLocally(toSave)
-                    scope.launch {
-                        snack.showSnackbar("Saved locally (Room).")
+
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = {
+                        val toSave = buildSaveList()
+                        vm.saveAllLocally(toSave)
+                        scope.launch {
+                            snack.showSnackbar("Saved locally (Room).")
+                        }
+                        navigateUp()
                     }
+                ) {
+                    Icon(Icons.Outlined.Save, contentDescription = "Save")
                 }
-            ) {
-                Icon(Icons.Outlined.Save, contentDescription = "Save")
             }
-        }
+
     ) { innerPadding ->
 
         Column(
