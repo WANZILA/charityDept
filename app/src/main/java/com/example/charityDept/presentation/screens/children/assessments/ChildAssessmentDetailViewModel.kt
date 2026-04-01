@@ -52,10 +52,18 @@ class ChildAssessmentDetailViewModel @Inject constructor(
         }
     }
 
-    fun softDeleteAnswer(answerId: String) {
+//    fun softDeleteAnswer(answerId: String) {
+//        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+//        viewModelScope.launch {
+//            repo.softDeleteAnswer(answerId, uid)
+//        }
+//    }
+    fun softDeleteSession(answerIds: List<String>) {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         viewModelScope.launch {
-            repo.softDeleteAnswer(answerId, uid)
+            answerIds.forEach { answerId ->
+                repo.softDeleteAnswer(answerId, uid)
+            }
         }
     }
 }

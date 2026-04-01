@@ -62,11 +62,11 @@ fun FamilyListScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Families")
                         Spacer(Modifier.width(8.dp))
-                        Text(
-                            "${ui.totalFamilies} families • ${ui.totalMembers} members",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.outline
-                        )
+//                        Text(
+//                            "${ui.totalFamilies} families • ${ui.totalMembers} members",
+//                            style = MaterialTheme.typography.labelMedium,
+//                            color = MaterialTheme.colorScheme.outline
+//                        )
                     }
                 },
                 actions = {

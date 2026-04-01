@@ -91,7 +91,7 @@ fun ChildAssessmentDetailScreen(
 
     val drafts = remember(childId, generalId, mode) { mutableStateMapOf<String, Draft>() }
 
-    var deleteTarget by remember { mutableStateOf<AssessmentAnswer?>(null) }
+    var showDeleteSessionConfirm by remember { mutableStateOf(false) }
 
     var sessionRecommendation by remember(childId, generalId, mode) { mutableStateOf("") }
 
@@ -139,40 +139,38 @@ fun ChildAssessmentDetailScreen(
         }
     }
 
-    if (deleteTarget != null) {
+    if (showDeleteSessionConfirm) {
         AlertDialog(
-            onDismissRequest = { deleteTarget = null },
+            onDismissRequest = { showDeleteSessionConfirm = false },
             title = {
                 Text(
-                    if (isObservationMode) "Delete observation?" else "Delete answer?"
+                    if (isObservationMode) "Delete whole observation session?"
+                    else "Delete whole Q&A session?"
                 )
             },
             text = {
-                Text("This will remove it from this session (soft delete).")
+                Text("This will soft-delete all items in this session.")
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val target = deleteTarget
-                        deleteTarget = null
-                        if (target != null) {
-                            vm.softDeleteAnswer(target.answerId)
-                            scope.launch {
-                                snack.showSnackbar(
-                                    if (isObservationMode) "Observation deleted (soft)."
-                                    else "Answer deleted (soft)."
-                                )
-                            }
+                        showDeleteSessionConfirm = false
+                        vm.softDeleteSession(ui.items.map { it.answerId })
+                        scope.launch {
+                            snack.showSnackbar(
+                                if (isObservationMode) "Observation session deleted (soft)."
+                                else "Q&A session deleted (soft)."
+                            )
                         }
+                        navigateUp()
                     }
                 ) { Text("Delete") }
             },
             dismissButton = {
-                TextButton(onClick = { deleteTarget = null }) { Text("Cancel") }
+                TextButton(onClick = { showDeleteSessionConfirm = false }) { Text("Cancel") }
             }
         )
     }
-
     Scaffold(
         snackbarHost = { SnackbarHost(snack) },
         topBar = {
@@ -181,6 +179,11 @@ fun ChildAssessmentDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = navigateUp) {
                         Icon(Icons.Outlined.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showDeleteSessionConfirm = true }) {
+                        Icon(Icons.Outlined.Delete, contentDescription = "Delete Session")
                     }
                 }
             )
@@ -223,8 +226,11 @@ fun ChildAssessmentDetailScreen(
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.fillMaxSize()
             ) {
+                item{
+
+                }
                 itemsIndexed(
                     items = ui.items,
                     key = { _, item -> item.answerId }
@@ -254,14 +260,13 @@ fun ChildAssessmentDetailScreen(
                                     }
 
                                     Text(
-                                        "${item.category} • ${item.subCategory}",
+//                                        "${item.category} • ${item.subCategory}",
+                                        "${item.subCategory}",
                                         style = MaterialTheme.typography.labelMedium
                                     )
                                 }
 
-                                IconButton(onClick = { deleteTarget = item }) {
-                                    Icon(Icons.Outlined.Delete, contentDescription = "Delete")
-                                }
+                                Spacer(Modifier.height(0.dp))
                             }
 
                             Spacer(Modifier.height(6.dp))
@@ -312,7 +317,7 @@ fun ChildAssessmentDetailScreen(
                                 )
                             }
 
-                            Spacer(Modifier.height(10.dp))
+//                            Spacer(Modifier.height(10.dp))
 
 //                            OutlinedTextField(
 //                                value = draft.notes,
@@ -325,17 +330,27 @@ fun ChildAssessmentDetailScreen(
                         }
                     }
                 }
+
+
+                item {
+                    ElevatedCard(Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(14.dp)) {
+                            Spacer(Modifier.height(12.dp))
+
+                            OutlinedTextField(
+                                value = sessionRecommendation,
+                                onValueChange = { v -> sessionRecommendation = v },
+                                label = { Text(recommendationLabel) },
+                                modifier = Modifier.fillMaxWidth(),
+                                minLines = 3
+                            )
+                        }
+                    }
+                }
+
             }
 
-            Spacer(Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = sessionRecommendation,
-                onValueChange = { v -> sessionRecommendation = v },
-                label = { Text(recommendationLabel) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3
-            )
         }
     }
 }
