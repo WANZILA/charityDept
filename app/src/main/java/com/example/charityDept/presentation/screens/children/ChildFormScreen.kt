@@ -1136,13 +1136,16 @@ private fun StepSpiritual(uiState: ChildFormUiState, vm: ChildFormViewModel) {
             leadingIcon = { Icon(Icons.Outlined.CalendarMonth, null) }
         )
 
-        EnumDropdown(
-            title = "Class Group",
-            selected = uiState.classGroup,
-            values = ClassGroup.values().toList(),
-            onSelected = { vm.ui = vm.ui.copy(classGroup = it) },
-            labelFor = ::labelForClassGroup,
-            iconFor = ::iconForClassGroup
+        AppTextField(
+            value = labelForClassGroup(uiState.classGroup),
+            onValueChange = {},
+            label = "Class Group",
+            modifier = Modifier.fillMaxWidth(),
+            readOnly = true,
+            leadingIcon = {
+                Icon(iconForClassGroup(uiState.classGroup), contentDescription = null)
+            },
+            supportingText = "Auto-selected from age"
         )
 
         AppDateField(

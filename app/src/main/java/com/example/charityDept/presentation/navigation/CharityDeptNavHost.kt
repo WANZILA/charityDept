@@ -84,6 +84,7 @@ fun CharityDeptNavHost(
         val bottomBarDestinations = remember {
             setOf(
                 Screen.HomeDashboard.route,
+                Screen.RegisterDashboard.route,
                 Screen.ChildrenDashboard.route,
                 Screen.EventsDashboard.route,
                 Screen.AttendanceDashboard.route,
