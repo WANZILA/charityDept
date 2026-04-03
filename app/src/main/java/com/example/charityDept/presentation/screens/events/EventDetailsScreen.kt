@@ -44,7 +44,7 @@ fun EventDetailsScreen(
     onEdit: (String) -> Unit,
     toAttendanceRoster: (String, String) -> Unit,
     toEventList: () -> Unit,
-    navigateUp: () -> Unit,
+    navigateUp: (String) -> Unit,
     vm: EventDetailsViewModel = hiltViewModel(),
     authVM: AuthViewModel = hiltViewModel(),
 ) {
@@ -85,7 +85,7 @@ fun EventDetailsScreen(
             CenterAlignedTopAppBar(
                 title = { Text(ui.event?.title?.ifBlank { "Event details" } ?: "Event details", style = MaterialTheme.typography.titleSmall) },
                 navigationIcon = {
-                    IconButton(onClick = navigateUp) {
+                    IconButton(onClick = { navigateUp(eventIdArg) }) {
                         Icon(Icons.Filled.ArrowCircleLeft, contentDescription = "Back")
                     }
                 },
@@ -109,7 +109,7 @@ fun EventDetailsScreen(
                             )
                         }
 //
-                        IconButton(onClick = navigateUp) {
+                        IconButton(onClick = toEventList) {
                             Icon(Icons.Outlined.Close, contentDescription = "Close")
                         }
                     }

@@ -16,6 +16,22 @@ import com.google.firebase.Timestamp  // /// CHANGED: use Firestore Timestamp in
 
 @Dao
 interface EventDao {
+    @Query("""
+        SELECT * FROM events
+        WHERE isDeleted = 0
+          AND isChild = 1
+          AND eventParentId = :parentEventId
+        ORDER BY eventDate DESC, updatedAt DESC, createdAt DESC
+    """)
+    fun observeChildrenForParent(parentEventId: String): Flow<List<Event>>
+
+    @Query("""
+        SELECT COUNT(*) FROM events
+        WHERE isDeleted = 0
+          AND isChild = 1
+          AND eventParentId = :parentEventId
+    """)
+    fun observeChildCountForParent(parentEventId: String): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM events WHERE isDeleted = 0")
     fun observeActiveCount(): Flow<Int>

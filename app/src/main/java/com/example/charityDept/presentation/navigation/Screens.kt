@@ -284,6 +284,10 @@ sealed class Screen(val route: String) {
 
     object EventsList : Screen("events_list")
 
+    object SingleEventDashboard : Screen("single_event_dashboard/{eventId}") {
+        fun createRoute(eventId: String) = "single_event_dashboard/$eventId"
+    }
+
     object EventDetails : Screen("event_details/{eventId}") {
         fun createRoute(eventId: String) = "event_details/$eventId"
     }

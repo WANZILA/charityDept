@@ -1278,7 +1278,7 @@ fun CharityDeptNavHost(
                     composable(Screen.EventsDashboard.route) {
                         EventDashboardScreen(
                             toEventDetails = { eventIdArg ->
-                                navController.navigate(Screen.EventDetails.createRoute(eventIdArg)) {
+                                navController.navigate(Screen.SingleEventDashboard.createRoute(eventIdArg)) {
                                     popUpTo(Screen.EventsDashboard.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
@@ -1296,7 +1296,7 @@ fun CharityDeptNavHost(
                                 }
                             },
                             onOpenEvent = { eventIdArg ->
-                                navController.navigate(Screen.EventDetails.createRoute(eventIdArg)) {
+                                navController.navigate(Screen.SingleEventDashboard.createRoute(eventIdArg)) {
                                     popUpTo(Screen.EventsDashboard.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
@@ -1322,7 +1322,7 @@ fun CharityDeptNavHost(
                         EventFormScreen(
                             eventIdArg = eventId,
                             onFinished = { eventIdArg ->
-                                navController.navigate(Screen.EventDetails.createRoute(eventIdArg)) {
+                                navController.navigate(Screen.SingleEventDashboard.createRoute(eventIdArg)) {
                                     popUpTo(Screen.EventForm.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
@@ -1351,7 +1351,7 @@ fun CharityDeptNavHost(
                                 }
                             },
                             onEventClick = { eventIdArg ->
-                                navController.navigate(Screen.EventDetails.createRoute(eventIdArg)) {
+                                navController.navigate(Screen.SingleEventDashboard.createRoute(eventIdArg)) {
                                     popUpTo(Screen.EventsList.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
@@ -1384,12 +1384,18 @@ fun CharityDeptNavHost(
                                     launchSingleTop = true
                                 }
                             },
-                            navigateUp = {
-                                navController.navigate(Screen.EventsList.route) {
+
+                            navigateUp = { eventIdArg ->
+                                navController.navigate(
+                                    Screen.SingleEventDashboard.createRoute(
+                                        eventIdArg
+                                    )
+                                ) {
                                     popUpTo(Screen.EventDetails.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
-                            },
+                            }
+                         ,
                         )
                     }
 
@@ -1425,7 +1431,7 @@ fun CharityDeptNavHost(
                             eventId = eventId,
                             adminId = "0",
                             navigateUp = {
-                                navController.navigate(Screen.EventsList.route) {
+                                navController.navigate(Screen.SingleEventDashboard.createRoute(eventId)) {
                                     popUpTo(Screen.EventDetails.route) { inclusive = true }
                                     launchSingleTop = true
                                 }

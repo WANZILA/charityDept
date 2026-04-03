@@ -54,6 +54,10 @@ interface OfflineEventsRepository {
 
     fun observeEventsForParentPick(): Flow<List<Event>>
 
+    fun observeEventById(eventId: String): Flow<Event?>
+    fun observeChildrenForParent(parentEventId: String): Flow<List<Event>>
+    fun observeChildCountForParent(parentEventId: String): Flow<Int>
+
 }
 
 @Singleton
@@ -160,6 +164,15 @@ class OfflineEventsRepositoryImpl @Inject constructor(
         ).flow
 
     override fun observeEventsForParentPick(): Flow<List<Event>> = eventDao.observeParentCandidates()
+
+    override fun observeEventById(eventId: String): Flow<Event?> =
+        eventDao.observeById(eventId)
+
+    override fun observeChildrenForParent(parentEventId: String): Flow<List<Event>> =
+        eventDao.observeChildrenForParent(parentEventId)
+
+    override fun observeChildCountForParent(parentEventId: String): Flow<Int> =
+        eventDao.observeChildCountForParent(parentEventId)
 
     // --- keep other methods unchanged ---
 
