@@ -359,7 +359,7 @@ private fun MemberRow(
             )
 
             Text(
-                text = "Age: ${if (member.age > 0) member.age.toString() else "-"} • Gender: ${member.gender.ifBlank { "-" }}",
+                text = "Age: ${if (member.age > 0) member.age.toString() else "-"} • Gender: ${member.gender.toString().ifBlank { "-" }}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

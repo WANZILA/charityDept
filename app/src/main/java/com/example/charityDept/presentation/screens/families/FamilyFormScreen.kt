@@ -147,7 +147,12 @@ fun FamilyFormScreen(
                 onValueChange = vm::onCaseReferenceNumber,
                 label = { Text("Case Reference Number") },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+
             )
 
             OutlinedTextField(
@@ -156,6 +161,10 @@ fun FamilyFormScreen(
                 label = { Text("First Name*") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
 //                isError = ui.headError != null,
                 supportingText = {
                     ui.headError?.let {

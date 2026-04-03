@@ -19,6 +19,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import com.example.charityDept.data.mappers.FamilyMappers
 
 @HiltWorker
 class FamilyMemberPullWorker @AssistedInject constructor(
@@ -27,6 +28,8 @@ class FamilyMemberPullWorker @AssistedInject constructor(
     private val familyDao: FamilyDao,
     private val firestore: FirebaseFirestore
 ) : CoroutineWorker(appContext, params) {
+
+    private val familyMappers = FamilyMappers()
 
     companion object {
         private const val COLLECTION = "family_members"
@@ -68,7 +71,6 @@ class FamilyMemberPullWorker @AssistedInject constructor(
                     isDirty = false
                 )
             }
-
             if (remoteMembers.isNotEmpty()) {
                 familyDao.upsertAllFamilyMembers(remoteMembers)
             }

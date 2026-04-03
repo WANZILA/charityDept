@@ -21,6 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
+import com.example.charityDept.data.mappers.FamilyMappers
+//import com.example.charityDept.data.mappers.FamilyMappers
 @HiltWorker
 class FamilyPullWorker @AssistedInject constructor(
     @Assisted appContext: Context,
@@ -28,6 +30,8 @@ class FamilyPullWorker @AssistedInject constructor(
     private val familyDao: FamilyDao,
     private val firestore: FirebaseFirestore
 ) : CoroutineWorker(appContext, params) {
+
+    private val familyMappers = FamilyMappers()
 
     companion object {
         private const val FAMILIES_COLLECTION = "families"
@@ -60,16 +64,21 @@ class FamilyPullWorker @AssistedInject constructor(
             val remoteFamilies = snap.documents.mapNotNull { doc ->
                 val version = doc.getLong("version") ?: return@mapNotNull null
                 val updatedAt = doc.getTimestamp("updatedAt") ?: return@mapNotNull null
-                val obj = doc.toObject(Family::class.java) ?: return@mapNotNull null
+                val obj = familyMappers.run { doc.toFamilyOrNull() } ?: return@mapNotNull null
 
                 obj.copy(
                     familyId = obj.familyId.ifBlank { doc.id },
                     version = version,
                     updatedAt = updatedAt,
-                    isDirty = false
+                    isDirty = false,
+                    isDeleted = doc.getBoolean("isDeleted") ?: obj.isDeleted,
+                    deletedAt = if (doc.getBoolean("isDeleted") == true) {
+                        doc.getTimestamp("deletedAt") ?: obj.deletedAt
+                    } else {
+                        null
+                    }
                 )
             }
-
             if (remoteFamilies.isNotEmpty()) {
                 familyDao.upsertAllFamilies(remoteFamilies)
             }

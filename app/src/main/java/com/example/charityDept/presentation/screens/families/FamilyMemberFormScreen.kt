@@ -10,15 +10,21 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowCircleLeft
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Man
+import androidx.compose.material.icons.outlined.Woman
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -33,13 +39,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.charityDept.data.model.Gender
 import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,10 +129,15 @@ fun FamilyMemberFormScreen(
             }
 
             OutlinedTextField(
-                value = ui.fname,
+                value = ui.fName,
                 onValueChange = vm::onfName,
                 label = { Text(" First Name*") },
                 modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
                 isError = ui.nameError != null,
                 supportingText = {
                     ui.nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -131,10 +145,15 @@ fun FamilyMemberFormScreen(
             )
 
             OutlinedTextField(
-                value = ui.lname,
+                value = ui.lName,
                 onValueChange = vm::onlName,
                 label = { Text("Last Name*") },
                 modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
                 isError = ui.nameError != null,
                 supportingText = {
                     ui.nameError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -145,14 +164,21 @@ fun FamilyMemberFormScreen(
                 value = ui.age,
                 onValueChange = vm::onAge,
                 label = { Text("Age") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.NumberPassword,
+                    imeAction = ImeAction.Next
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            OutlinedTextField(
-                value = ui.gender,
-                onValueChange = vm::onGender,
-                label = { Text("Gender") },
-                modifier = Modifier.fillMaxWidth()
+            EnumDropdown(
+                title = "Gender",
+                selected = ui.gender,
+                values = Gender.values().toList(),
+                onSelected = vm::onGender,
+                labelFor = ::labelForGender,
+                iconFor = ::iconForGender
             )
 
             OutlinedTextField(
@@ -183,7 +209,7 @@ fun FamilyMemberFormScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
+                    keyboardType = KeyboardType.NumberPassword,
                     imeAction = ImeAction.Next
                 )
             )
@@ -195,7 +221,7 @@ fun FamilyMemberFormScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Phone,
+                    keyboardType = KeyboardType.NumberPassword,
                     imeAction = ImeAction.Next
                 )
             )
@@ -204,6 +230,11 @@ fun FamilyMemberFormScreen(
                 value = ui.ninNumber,
                 onValueChange = vm::onNinNumber,
                 label = { Text("NIN Number") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -212,6 +243,69 @@ fun FamilyMemberFormScreen(
             }
 
             Spacer(Modifier.height(72.dp))
+        }
+    }
+}
+
+
+private fun labelForGender(v: Gender): String = when (v) {
+    Gender.MALE -> "Male"
+    Gender.FEMALE -> "Female"
+}
+
+private fun iconForGender(v: Gender): ImageVector = when (v) {
+    Gender.MALE -> Icons.Outlined.Man
+    Gender.FEMALE -> Icons.Outlined.Woman
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun <T : Enum<T>> EnumDropdown(
+    title: String,
+    selected: T,
+    values: List<T>,
+    onSelected: (T) -> Unit,
+    labelFor: (T) -> String = { it.name },
+    iconFor: ((T) -> ImageVector)? = null
+) {
+    var expanded by remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = labelFor(selected),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(title) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            values.forEach { item ->
+                DropdownMenuItem(
+                    text = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            iconFor?.let {
+                                Icon(it(item), contentDescription = null)
+                                Spacer(Modifier.width(8.dp))
+                            }
+                            Text(labelFor(item))
+                        }
+                    },
+                    onClick = {
+                        onSelected(item)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }

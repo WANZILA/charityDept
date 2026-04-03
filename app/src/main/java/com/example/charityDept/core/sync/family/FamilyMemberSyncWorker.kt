@@ -22,7 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-
+import com.example.charityDept.data.mappers.FamilyMappers
 @HiltWorker
 class FamilyMemberSyncWorker @AssistedInject constructor(
     @Assisted appContext: Context,
@@ -31,6 +31,8 @@ class FamilyMemberSyncWorker @AssistedInject constructor(
     private val familyDao: FamilyDao,
     private val firestore: FirebaseFirestore
 ) : CoroutineWorker(appContext, params) {
+
+    private val familyMappers = FamilyMappers()
 
     companion object {
         private const val TAG = "FamilyMemberSyncWorker"
@@ -86,7 +88,7 @@ class FamilyMemberSyncWorker @AssistedInject constructor(
                                     remoteUpdatedAt.toDate().time > local.updatedAt.toDate().time)
 
                 if (serverWins) {
-                    val remote = snap.toObject(FamilyMember::class.java)
+                    val remote = familyMappers.run { snap.toFamilyMemberOrNull() }
                     if (remote != null) {
                         conflictRemotes += remote.copy(
                             familyMemberId = remote.familyMemberId.ifBlank { local.familyMemberId },
@@ -113,9 +115,21 @@ class FamilyMemberSyncWorker @AssistedInject constructor(
                             version = nextVersion
                         )
 
+                        val patch = familyMappers.run {
+                            toRemote.toFirestoreMapPatch()
+                        }.toMutableMap().apply {
+                            this["familyMemberId"] = toRemote.familyMemberId
+                            this["updatedAt"] = now
+                            this["version"] = nextVersion
+                            this["isDeleted"] = toRemote.isDeleted
+                            if (toRemote.isDeleted) {
+                                this["deletedAt"] = (toRemote.deletedAt ?: now)
+                            }
+                        }
+
                         b.set(
                             familyMembersRef.document(toRemote.familyMemberId),
-                            toRemote,
+                            patch,
                             SetOptions.merge()
                         )
                     }

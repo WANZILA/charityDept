@@ -163,9 +163,13 @@ private fun FamilyDetailsContent(
     ) {
         item {
             CollapsibleSection("Basic Info", openBasic, { openBasic = !openBasic }) {
-                Field("Head of household", family.primaryContactHeadOfHousehold.ifBlank { "-" })
+                Field("First Name", family.fName.ifBlank { "-" })
+                Field("Last Name", family.lName.ifBlank { "-" })
+                Field("Gender", family.gender.toString().ifBlank { "-" })
+                Field("Occupation:", family.occupationOrSchoolGrade.ifBlank { "-" })
+
                 Field("Case reference", family.caseReferenceNumber.ifBlank { "-" })
-                Field("Address / Location", family.addressLocation.ifBlank { "-" })
+//                Field("Address / Location", family.addressLocation.ifBlank { "-" })
                 Field("Born again", if (family.isBornAgain) "Yes" else "No")
                 Field("Phone 1", family.personalPhone1.ifBlank { "-" })
                 Field("Phone 2", family.personalPhone2.ifBlank { "-" })
@@ -275,7 +279,7 @@ private fun MemberBlock(member: FamilyMember) {
         Field("Last Name", member.lName.ifBlank { "-" })
         Field("Relationship", member.relationship.ifBlank { "-" })
         Field("Age", if (member.age > 0) member.age.toString() else "-")
-        Field("Gender", member.gender.ifBlank { "-" })
+        Field("Gender", member.gender.toString().ifBlank { "-" })
         Field("Occupation / School Grade", member.occupationOrSchoolGrade.ifBlank { "-" })
         Field("Health / Disability Status", member.healthOrDisabilityStatus.ifBlank { "-" })
         Field("Phone 1", member.personalPhone1.ifBlank { "-" })

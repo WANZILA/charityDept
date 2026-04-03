@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.charityDept.core.Utils.GenerateId
 import com.example.charityDept.data.model.FamilyMember
+import com.example.charityDept.data.model.Gender
 import com.example.charityDept.domain.repositories.offline.OfflineFamiliesRepository
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,10 +21,10 @@ data class FamilyMemberFormUiState(
     val saving: Boolean = false,
     val familyMemberId: String = "",
     val familyId: String = "",
-    val fname: String = "",
-    val lname: String = "",
+    val fName: String = "",
+    val lName: String = "",
     val age: String = "",
-    val gender: String = "",
+    val gender: Gender = Gender.MALE,
     val relationship: String = "",
     val occupationOrSchoolGrade: String = "",
     val healthOrDisabilityStatus: String = "",
@@ -75,8 +76,8 @@ class FamilyMemberFormViewModel @Inject constructor(
                         loading = false,
                         familyMemberId = member.familyMemberId,
                         familyId = familyId,
-                        fname = member.fName,
-                        lname = member.lName,
+                        fName = member.fName,
+                        lName = member.lName,
                         age = if (member.age > 0) member.age.toString() else "",
                         gender = member.gender,
                         relationship = member.relationship,
@@ -93,15 +94,25 @@ class FamilyMemberFormViewModel @Inject constructor(
         }
     }
 
-    fun onfName(v: String) { _ui.value = _ui.value.copy(fname = v, nameError = null) }
-    fun onlName(v: String) { _ui.value = _ui.value.copy(lname = v, nameError = null) }
+    fun onfName(v: String) { _ui.value = _ui.value.copy(fName = v, nameError = null) }
+    fun onlName(v: String) { _ui.value = _ui.value.copy(lName = v, nameError = null) }
 
     fun onAge(v: String) { _ui.value = _ui.value.copy(age = v) }
-    fun onGender(v: String) { _ui.value = _ui.value.copy(gender = v) }
-    fun onRelationship(v: String) { _ui.value = _ui.value.copy(relationship = v) }
-    fun onOccupationOrSchoolGrade(v: String) { _ui.value = _ui.value.copy(occupationOrSchoolGrade = v) }
-    fun onHealthOrDisabilityStatus(v: String) { _ui.value = _ui.value.copy(healthOrDisabilityStatus = v) }
-    fun onPersonalPhone1(v: String) {
+    fun onGender(v: Gender) {
+        _ui.value = _ui.value.copy(gender = v)
+    }
+    fun onRelationship(v: String) {
+        _ui.value = _ui.value.copy(relationship = v.toWordCase())
+    }
+
+    fun onOccupationOrSchoolGrade(v: String) {
+        _ui.value = _ui.value.copy(occupationOrSchoolGrade = v.toWordCase())
+    }
+
+    fun onHealthOrDisabilityStatus(v: String) {
+        _ui.value = _ui.value.copy(healthOrDisabilityStatus = v.toWordCase())
+    }
+     fun onPersonalPhone1(v: String) {
         _ui.value = _ui.value.copy(personalPhone1 = v.filter { it.isDigit() })
     }
 
@@ -112,7 +123,7 @@ class FamilyMemberFormViewModel @Inject constructor(
 
     fun save() {
         val state = _ui.value
-        if (state.fname.isBlank() && state.lname.isBlank()) {
+        if (state.fName.isBlank() && state.lName.isBlank()) {
             _ui.value = state.copy(nameError = "Name is required")
             return
         }
@@ -128,10 +139,10 @@ class FamilyMemberFormViewModel @Inject constructor(
                 val member = FamilyMember(
                     familyMemberId = id,
                     familyId = state.familyId,
-                    fName = state.fname.trim(),
-                    lName = state.lname.trim(),
+                    fName = state.fName.trim(),
+                    lName = state.lName.trim(),
                     age = state.age.toIntOrNull() ?: 0,
-                    gender = state.gender.trim(),
+                    gender = state.gender,
                     relationship = state.relationship.trim(),
                     occupationOrSchoolGrade = state.occupationOrSchoolGrade.trim(),
                     healthOrDisabilityStatus = state.healthOrDisabilityStatus.trim(),
@@ -154,6 +165,18 @@ class FamilyMemberFormViewModel @Inject constructor(
                     error = t.message ?: "Failed to save family member"
                 )
                 _events.send(Event.Error(t.message ?: "Failed to save family member"))
+            }
+        }
+    }
+}
+
+private fun String.toWordCase(): String {
+    return split(" ").joinToString(" ") { part ->
+        if (part.isBlank()) {
+            part
+        } else {
+            part.lowercase().replaceFirstChar { ch ->
+                if (ch.isLowerCase()) ch.titlecase() else ch.toString()
             }
         }
     }

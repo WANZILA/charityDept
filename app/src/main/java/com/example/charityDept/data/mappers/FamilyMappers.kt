@@ -15,7 +15,13 @@ private fun String?.toGender(): Gender =
 private fun DocumentSnapshot.str(key: String): String? = getString(key)
 private fun DocumentSnapshot.intPos(key: String): Int? = getLong(key)?.toInt()
 private fun DocumentSnapshot.ts(key: String): Timestamp? = getTimestamp(key)
-
+private fun DocumentSnapshot.strAny(vararg keys: String): String? {
+    keys.forEach { key ->
+        val value = getString(key)
+        if (!value.isNullOrBlank()) return value
+    }
+    return null
+}
 class FamilyMappers {
 
     fun Family.toFirestoreMapPatch(): Map<String, Any> = buildMap {
@@ -85,8 +91,8 @@ class FamilyMappers {
             familyId = str("familyId") ?: id,
             caseReferenceNumber = str("caseReferenceNumber") ?: "",
             dateOfAssessment = ts("dateOfAssessment"),
-            fName = str("fName") ?: "",
-            lName = str("lName") ?: "",
+            fName = strAny("fName", "fname") ?: "",
+            lName = strAny("lName", "lname") ?: "",
             gender = (str("gender")).toGender(),
             occupationOrSchoolGrade = str("occupationOrSchoolGrade") ?: "",
             primaryContactHeadOfHousehold = str("primaryContactHeadOfHousehold") ?: "",
@@ -141,7 +147,7 @@ class FamilyMappers {
         putIfNotBlank("lName", lName)
         if (age > 0) put("age", age)
 
-        putIfNotBlank("gender", gender)
+        putIfNotBlank("gender", gender.name)
         putIfNotBlank("relationship", relationship)
         putIfNotBlank("occupationOrSchoolGrade", occupationOrSchoolGrade)
         putIfNotBlank("healthOrDisabilityStatus", healthOrDisabilityStatus)
@@ -172,11 +178,11 @@ class FamilyMappers {
             familyMemberId = str("familyMemberId") ?: id,
             familyId = str("familyId") ?: "",
 
-            fName = str("fName") ?: "",
-            lName = str("lName") ?: "",
+            fName = strAny("fName", "fname") ?: "",
+            lName = strAny("lName", "lname") ?: "",
             age = intPos("age") ?: 0,
 
-            gender = str("gender") ?: "",
+            (str("gender")).toGender(),
             relationship = str("relationship") ?: "",
             occupationOrSchoolGrade = str("occupationOrSchoolGrade") ?: "",
             healthOrDisabilityStatus = str("healthOrDisabilityStatus") ?: "",

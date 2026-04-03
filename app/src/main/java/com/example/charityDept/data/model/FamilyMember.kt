@@ -39,7 +39,7 @@ data class FamilyMember(
     val lName: String = "",
     val age: Int = 0,
 
-    val gender: String = "",
+    val gender: Gender = Gender.MALE,
     val relationship: String = "",
     val occupationOrSchoolGrade: String = "",
     val healthOrDisabilityStatus: String = "",
