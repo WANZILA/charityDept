@@ -53,6 +53,7 @@ fun SingleEventDashboardScreen(
     onAddChildEvent: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
     onOpenChildEvent: (String) -> Unit,
+    onOpenFrequentAttendee: (String) -> Unit,
     navigateUp: () -> Unit,
     vm: SingleEventDashboardViewModel = hiltViewModel(),
     authVM: AuthViewModel = hiltViewModel(),
@@ -127,6 +128,7 @@ fun SingleEventDashboardScreen(
                     onAddChildEvent = onAddChildEvent,
                     onOpenAttendance = onOpenAttendance,
                     onOpenChildEvent = onOpenChildEvent,
+                    onOpenFrequentAttendee = onOpenFrequentAttendee,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -145,6 +147,7 @@ private fun DashboardContent(
     onAddChildEvent: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
     onOpenChildEvent: (String) -> Unit,
+    onOpenFrequentAttendee: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -229,9 +232,13 @@ private fun DashboardContent(
                 )
             }
         } else {
-            items(frequentAttendees.take(10), key = { it.childId }) { row ->
-                FrequentAttendeeRow(row = row)
-            }
+        items(frequentAttendees.take(10), key = { it.childId }) { row ->
+            FrequentAttendeeRow(
+                row = row,
+                onClick = { onOpenFrequentAttendee(row.childId) }
+            )
+
+    }
         }
         item {
             Text(
@@ -411,37 +418,50 @@ private fun ChildEventRow(
 
 @Composable
 private fun FrequentAttendeeRow(
-    row: EventFrequentAttendeeRow
+    row: EventFrequentAttendeeRow,
+    onClick: () -> Unit
 ) {
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = listOf(row.fName, row.lName).joinToString(" ").trim()
+                            .ifBlank { "Unknown Child" },
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = row.childId,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "Tap to view attendance history",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
                 Text(
-                    text = listOf(row.fName, row.lName).joinToString(" ").trim().ifBlank { "Unknown Child" },
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Text(
-                    text = row.childId,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = row.presentCount.toString(),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-
-            Text(
-                text = row.presentCount.toString(),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
         }
     }
 }

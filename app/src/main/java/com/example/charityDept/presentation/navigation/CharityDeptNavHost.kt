@@ -1454,6 +1454,12 @@ fun CharityDeptNavHost(
                                     launchSingleTop = true
                                 }
                             },
+                            onOpenFrequentAttendee = { childId ->
+                                navController.navigate(Screen.ChildEventHistory.createRoute(childId)) {
+                                    popUpTo(Screen.SingleEventDashboard.route) { inclusive = false }
+                                    launchSingleTop = true
+                                }
+                            },
                             navigateUp = {
                                 navController.navigate(Screen.EventsList.route) {
                                     popUpTo(Screen.SingleEventDashboard.route) { inclusive = true }
@@ -1536,10 +1542,12 @@ fun CharityDeptNavHost(
                                     launchSingleTop = true
                                 }
                             },
-                            onEventClick = {
-
+                            onEventClick = { eventId ->
+                                navController.navigate(Screen.SingleEventDashboard.createRoute(eventId)) {
+                                    popUpTo(Screen.ChildEventHistory.route) { inclusive = false }
+                                    launchSingleTop = true
+                                }
                             },
-
                         )
 
                     }
