@@ -107,6 +107,15 @@ class EventFormViewModel @Inject constructor(
         }
     }
 
+    fun seedNewChild(parentEventId: String) {
+        ensureNewIdIfNeeded()
+        _ui.value = _ui.value.copy(
+            isNew = true,
+            isChild = true,
+            eventParentId = parentEventId
+        )
+    }
+
     /** Final save (create or update). Emits Saved(id) on success. */
     fun save() = viewModelScope.launch {
         _ui.value = _ui.value.copy(saving = true, error = null)

@@ -1078,12 +1078,12 @@ fun CharityDeptNavHost(
                                     launchSingleTop = true
                                 }
                             },
-                            onSave = { 
+                            onSave = {
                                 navController.navigate(Screen.ChildForm.route) {
                                     popUpTo(Screen.ChildForm.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
-                                
+
                                 },
                             toList = {
                                 navController.navigate(Screen.ChildrenList.route) {
@@ -1312,15 +1312,31 @@ fun CharityDeptNavHost(
 
                     composable(
                         Screen.EventForm.route,
-                        arguments = listOf(navArgument("eventId") {
-                            type = NavType.StringType
-                            nullable = true
-                            defaultValue = null
-                        })
+                        arguments = listOf(
+                            navArgument("eventId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("parentEventId") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            },
+                            navArgument("isChild") {
+                                type = NavType.BoolType
+                                defaultValue = false
+                            }
+                        )
                     ) { backStackEntry ->
                         val eventId = backStackEntry.arguments?.getString("eventId")
+                        val parentEventId = backStackEntry.arguments?.getString("parentEventId")
+                        val isChild = backStackEntry.arguments?.getBoolean("isChild") ?: false
+
                         EventFormScreen(
                             eventIdArg = eventId,
+                            parentEventIdArg = parentEventId,
+                            isChildArg = isChild,
                             onFinished = { eventIdArg ->
                                 navController.navigate(Screen.SingleEventDashboard.createRoute(eventIdArg)) {
                                     popUpTo(Screen.EventForm.route) { inclusive = true }
@@ -1328,9 +1344,17 @@ fun CharityDeptNavHost(
                                 }
                             },
                             navigateUp = {
-                                navController.navigate(Screen.EventsDashboard.route) {
-                                    popUpTo(Screen.EventForm.route) { inclusive = true }
-                                    launchSingleTop = true
+                                val returnEventId = eventId ?: parentEventId
+                                if (!returnEventId.isNullOrBlank()) {
+                                    navController.navigate(Screen.SingleEventDashboard.createRoute(returnEventId)) {
+                                        popUpTo(Screen.EventForm.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+                                } else {
+                                    navController.navigate(Screen.EventsDashboard.route) {
+                                        popUpTo(Screen.EventForm.route) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
                                 }
                             }
                         )
@@ -1398,6 +1422,48 @@ fun CharityDeptNavHost(
                          ,
                         )
                     }
+
+                    composable(
+                        route = Screen.SingleEventDashboard.route,
+                        arguments = listOf(navArgument("eventId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        val eventId = backStackEntry.arguments?.getString("eventId") ?: return@composable
+                        SingleEventDashboardScreen(
+                            eventIdArg = eventId,
+                            onEditEvent = { eventIdArg ->
+                                navController.navigate(Screen.EventForm.editEvent(eventIdArg)) {
+                                    popUpTo(Screen.SingleEventDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onAddChildEvent = { parentEventId ->
+                                navController.navigate(Screen.EventForm.newChildEvent(parentEventId)) {
+                                    popUpTo(Screen.SingleEventDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onOpenAttendance = { eventIdArg ->
+                                navController.navigate(Screen.AttendanceRoster.createRoute(eventIdArg)) {
+                                    popUpTo(Screen.SingleEventDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onOpenChildEvent = { childEventId ->
+                                navController.navigate(Screen.SingleEventDashboard.createRoute(childEventId)) {
+                                    popUpTo(Screen.SingleEventDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            navigateUp = {
+                                navController.navigate(Screen.EventsList.route) {
+                                    popUpTo(Screen.SingleEventDashboard.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                    }
+
+
 
                     /** Attendance */
                     composable(Screen.AttendanceDashboard.route) {

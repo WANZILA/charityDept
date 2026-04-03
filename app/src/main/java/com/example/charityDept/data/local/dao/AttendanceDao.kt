@@ -9,7 +9,7 @@ import com.example.charityDept.data.model.Attendance
 import com.example.charityDept.data.model.AttendanceStatus
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.Flow
-
+import com.example.charityDept.data.local.projection.EventFrequentAttendeeRow
 @Dao
 interface AttendanceDao {
 
@@ -261,6 +261,22 @@ interface AttendanceDao {
 """)
     fun observeAllRecordedEventsForChild(childId: String): Flow<List<EventAttendanceRow>>
 
+    @Query("""
+        SELECT
+            c.childId AS childId,
+            c.fName AS fName,
+            c.lName AS lName,
+            COUNT(a.attendanceId) AS presentCount
+        FROM attendances a
+        JOIN children c ON c.childId = a.childId
+        WHERE a.isDeleted = 0
+          AND c.isDeleted = 0
+          AND a.status = 'PRESENT'
+          AND a.eventId IN (:eventIds)
+        GROUP BY c.childId, c.fName, c.lName
+        ORDER BY presentCount DESC, c.fName ASC, c.lName ASC
+    """)
+    fun observeFrequentAttendeesForEvents(eventIds: List<String>): Flow<List<EventFrequentAttendeeRow>>
 
     // /// CHANGED: cascade tombstone by eventId (mirror childId cascade)
     @Query("""

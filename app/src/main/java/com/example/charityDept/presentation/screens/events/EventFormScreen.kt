@@ -52,10 +52,11 @@ import java.util.Locale
 @Composable
 fun EventFormScreen(
     eventIdArg: String?,
+    parentEventIdArg: String?,
+    isChildArg: Boolean,
     onFinished: (String) -> Unit,
     navigateUp: () -> Unit,
     vm: EventFormViewModel = hiltViewModel(),
-//    authVM: AuthViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val ui by vm.ui.collectAsStateWithLifecycle()
@@ -78,14 +79,26 @@ fun EventFormScreen(
         }
     }
 
-    LaunchedEffect(eventIdArg) {
-        if (eventIdArg.isNullOrBlank()) vm.ensureNewIdIfNeeded() else vm.loadForEdit(eventIdArg)
+    LaunchedEffect(eventIdArg, parentEventIdArg, isChildArg) {
+        when {
+            !eventIdArg.isNullOrBlank() -> vm.loadForEdit(eventIdArg)
+            isChildArg && !parentEventIdArg.isNullOrBlank() -> vm.seedNewChild(parentEventIdArg)
+            else -> vm.ensureNewIdIfNeeded()
+        }
     }
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(if (eventIdArg.isNullOrBlank()) "Create Event" else "Edit Event") },
+                title = {
+                    Text(
+                        when {
+                            !eventIdArg.isNullOrBlank() -> "Edit Event"
+                            isChildArg -> "Create Child Event"
+                            else -> "Create Event"
+                        }
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = navigateUp) {
                         Icon(Icons.Filled.ArrowCircleLeft, contentDescription = "Back")

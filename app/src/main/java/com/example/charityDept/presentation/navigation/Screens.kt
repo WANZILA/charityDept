@@ -277,9 +277,11 @@ sealed class Screen(val route: String) {
     /** Events **/
     object EventsDashboard : Screen("events")
 
-    object EventForm : Screen("eventForm?eventId={eventId}") {
+    object EventForm : Screen("eventForm?eventId={eventId}&parentEventId={parentEventId}&isChild={isChild}") {
         fun newEvent() = "eventForm"
         fun editEvent(id: String) = "eventForm?eventId=$id"
+        fun newChildEvent(parentEventId: String) =
+            "eventForm?parentEventId=$parentEventId&isChild=true"
     }
 
     object EventsList : Screen("events_list")

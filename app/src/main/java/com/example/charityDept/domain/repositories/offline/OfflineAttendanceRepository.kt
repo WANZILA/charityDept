@@ -17,6 +17,7 @@ import com.example.charityDept.data.model.AttendanceStatus
 import com.example.charityDept.data.model.Child
 import com.example.charityDept.data.local.dao.AttendanceDao
 import com.example.charityDept.core.sync.attendance.AttendanceSyncScheduler // call enqueuePushNow after local writes
+import com.example.charityDept.data.local.projection.EventFrequentAttendeeRow
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CoroutineScope
@@ -67,6 +68,8 @@ interface OfflineAttendanceRepository {
         eventId: String,
         eventDate: Timestamp
     ): EligibleCounts
+
+    fun observeFrequentAttendeesForEvents(eventIds: List<String>): Flow<List<EventFrequentAttendeeRow>>
 }
 
 /**
@@ -125,31 +128,7 @@ class OfflineAttendanceRepositoryImpl @Inject constructor(
         return id
     }
 
-//    override fun enqueueUpsertAttendance(att: Attendance) {
-//        // Fire-and-forget local write. This runs in caller scope; your use-sites usually call from a coroutine.
-//        // If you want guaranteed background, wrap in app-scope coroutine.
-//        val id = att.attendanceId.ifBlank { idFor(att.eventId, att.childId) }
-//        val now = Timestamp.now()
-//
-//        // Best-effort (non-suspending) via Kotlin’s runCatching + Room’s main-safety (Room is main-safe for suspend; for non-suspend, ensure it’s off main).
-//        // Most callers will call this from a ViewModel coroutine—so it’s fine. If not, prefer the suspend path.
-//        try {
-//            val createdAt = att.createdAt
-//            // Minimal bump: we don’t know current version here, so set +1 from 0; worker/merge can reconcile.
-//            val toSave = att.copy(
-//                attendanceId = id,
-//                updatedAt = now,
-//                createdAt = createdAt,
-//                version = (att.version.takeIf { it > 0 } ?: 0L) + 1L,
-//                isDirty = true
-//            )
-//            // If your DAO only exposes suspend upsert, call from a coroutine at call-site; otherwise add a non-suspend @Insert(onConflict=REPLACE).
-//            // Here we assume suspend; most app code uses the suspend path primarily.
-//            // noop: encourage callers to use suspend upsertAttendance(...)
-//        } finally {
-//            AttendanceSyncScheduler.enqueuePushNow(appContext)
-//        }
-//    }
+
 
     override fun enqueueUpsertAttendance(att: Attendance) {
         val id  = att.attendanceId.ifBlank { idFor(att.eventId, att.childId) }
@@ -249,6 +228,9 @@ class OfflineAttendanceRepositoryImpl @Inject constructor(
         return Tasks.forResult(null)
     }
 
+
+    override fun observeFrequentAttendeesForEvents(eventIds: List<String>): Flow<List<EventFrequentAttendeeRow>> =
+        dao.observeFrequentAttendeesForEvents(eventIds)
     // 🔥 Hydrate exactly one event’s rows from Firestore → Room (server truth → clean)
     override suspend fun hydrateEvent(eventId: String) = withContext(Dispatchers.IO) {
         val snap = attendanceRef

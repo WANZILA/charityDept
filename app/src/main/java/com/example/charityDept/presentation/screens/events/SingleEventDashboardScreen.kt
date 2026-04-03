@@ -42,12 +42,15 @@ import com.example.charityDept.presentation.viewModels.auth.AuthViewModel
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.example.charityDept.data.local.projection.EventFrequentAttendeeRow
+import com.example.charityDept.domain.repositories.offline.EligibleCounts
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SingleEventDashboardScreen(
     eventIdArg: String,
     onEditEvent: (String) -> Unit,
+    onAddChildEvent: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
     onOpenChildEvent: (String) -> Unit,
     navigateUp: () -> Unit,
@@ -118,7 +121,10 @@ fun SingleEventDashboardScreen(
                     event = ui.event!!,
                     childEvents = ui.childEvents,
                     childCount = ui.childCount,
+                    attendanceSummary = ui.attendanceSummary,
+                    frequentAttendees = ui.frequentAttendees,
                     onEditEvent = onEditEvent,
+                    onAddChildEvent = onAddChildEvent,
                     onOpenAttendance = onOpenAttendance,
                     onOpenChildEvent = onOpenChildEvent,
                     modifier = Modifier.padding(innerPadding)
@@ -133,7 +139,10 @@ private fun DashboardContent(
     event: Event,
     childEvents: List<Event>,
     childCount: Int,
+    attendanceSummary: EligibleCounts,
+    frequentAttendees: List<EventFrequentAttendeeRow>,
     onEditEvent: (String) -> Unit,
+    onAddChildEvent: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
     onOpenChildEvent: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -149,7 +158,81 @@ private fun DashboardContent(
                 style = MaterialTheme.typography.titleLarge
             )
         }
+        item {
+            Text(
+                text = "Attendance Summary (This Event Only)",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
 
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                DashboardCardLike(
+                    title = "Eligible",
+                    value = attendanceSummary.totalEligible.toString(),
+                    modifier = Modifier.weight(1f),
+                    enabled = false
+                ) {}
+
+                DashboardCardLike(
+                    title = "Present",
+                    value = attendanceSummary.presentEligible.toString(),
+                    modifier = Modifier.weight(1f),
+                    enabled = false
+                ) {}
+            }
+        }
+
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                DashboardCardLike(
+                    title = "Absent",
+                    value = (attendanceSummary.totalEligible - attendanceSummary.presentEligible)
+                        .coerceAtLeast(0)
+                        .toString(),
+                    modifier = Modifier.weight(1f),
+                    enabled = false
+                ) {}
+
+                DashboardCardLike(
+                    title = "Scope",
+                    value = "This event only",
+                    modifier = Modifier.weight(1f),
+                    enabled = false
+                ) {}
+            }
+        }
+
+        item {
+            Text(
+                text = if (event.isChild) {
+                    "Frequent Attendees (This Event)"
+                } else {
+                    "Frequent Attendees (Parent + Children)"
+                },
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        if (frequentAttendees.isEmpty()) {
+            item {
+                Text(
+                    text = "No frequent attendees yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            items(frequentAttendees.take(10), key = { it.childId }) { row ->
+                FrequentAttendeeRow(row = row)
+            }
+        }
         item {
             Text(
                 text = "${event.eventDate.asDateOnly()} • ${event.eventStatus.name}",
@@ -179,6 +262,16 @@ private fun DashboardContent(
             }
         }
 
+        if (!event.isChild) {
+            item {
+                DashboardCardLike(
+                    title = "Add Child Event",
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    onAddChildEvent(event.eventId)
+                }
+            }
+        }
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -310,6 +403,43 @@ private fun ChildEventRow(
             Text(
                 text = "Tap to open dashboard",
                 style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+@Composable
+private fun FrequentAttendeeRow(
+    row: EventFrequentAttendeeRow
+) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = listOf(row.fName, row.lName).joinToString(" ").trim().ifBlank { "Unknown Child" },
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = row.childId,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Text(
+                text = row.presentCount.toString(),
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
         }
