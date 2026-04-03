@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import com.example.charityDept.data.mappers.FamilyMappers
 
 @HiltWorker
 class FamilySyncWorker @AssistedInject constructor(
@@ -32,6 +33,7 @@ class FamilySyncWorker @AssistedInject constructor(
     private val firestore: FirebaseFirestore
 ) : CoroutineWorker(appContext, params) {
 
+    private val familyMappers = FamilyMappers()
     companion object {
         private const val TAG = "FamilySyncWorker"
         private const val MAX_BATCH = 500
@@ -85,7 +87,7 @@ class FamilySyncWorker @AssistedInject constructor(
                                     remoteUpdatedAt.toDate().time > local.updatedAt.toDate().time)
 
                 if (serverWins) {
-                    val remote = snap.toObject(Family::class.java)
+                    val remote = familyMappers.run { snap.toFamilyOrNull() }
                     if (remote != null) {
                         conflictRemotes += remote.copy(
                             familyId = remote.familyId.ifBlank { local.familyId },
@@ -112,9 +114,21 @@ class FamilySyncWorker @AssistedInject constructor(
                             version = nextVersion
                         )
 
+                        val patch = familyMappers.run {
+                            toRemote.toFirestoreMapPatch()
+                        }.toMutableMap().apply {
+                            this["familyId"] = toRemote.familyId
+                            this["updatedAt"] = now
+                            this["version"] = nextVersion
+                            this["isDeleted"] = toRemote.isDeleted
+                            if (toRemote.isDeleted) {
+                                this["deletedAt"] = (toRemote.deletedAt ?: now)
+                            }
+                        }
+
                         b.set(
                             familyRef.document(toRemote.familyId),
-                            toRemote,
+                            patch,
                             SetOptions.merge()
                         )
                     }

@@ -14,10 +14,24 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+import com.example.charityDept.core.Utils.picker.PickerFeature
+import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.data.model.Country
+import com.example.charityDept.data.model.Gender
+import com.example.charityDept.domain.repositories.offline.OfflineUgAdminRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 data class FamilyFormUiState(
     val loading: Boolean = false,
     val saving: Boolean = false,
+    val fName: String = "",
+    val lName: String = "",
+    val country: String = "",
+    val gender: Gender = Gender.MALE,
+    val occupationOrSchoolGrade: String = "",
+
     val familyId: String = "",
     val caseReferenceNumber: String = "",
     val dateOfAssessment: Timestamp? = null,
@@ -49,9 +63,260 @@ data class FamilyFormUiState(
 
 @HiltViewModel
 class FamilyFormViewModel @Inject constructor(
-    private val repo: OfflineFamiliesRepository
+    private val repo: OfflineFamiliesRepository,
+    private val ugRepo: OfflineUgAdminRepository
 ) : ViewModel() {
 
+    class UgandaAddressPicker(
+        private val scope: CoroutineScope,
+        private val repo: OfflineUgAdminRepository,
+        private val setAddress: (
+            region: String,
+            district: String,
+            county: String,
+            subCounty: String,
+            parish: String,
+            village: String
+        ) -> Unit
+    )
+    {
+        private val selectedRegionCode = MutableStateFlow<String?>(null)
+        private val selectedDistrictCode = MutableStateFlow<String?>(null)
+        private val selectedCountyCode = MutableStateFlow<String?>(null)
+        private val selectedSubCountyCode = MutableStateFlow<String?>(null)
+        private val selectedParishCode = MutableStateFlow<String?>(null)
+
+        private var regionName: String = ""
+        private var districtName: String = ""
+        private var countyName: String = ""
+        private var subCountyName: String = ""
+        private var parishName: String = ""
+        private var villageName: String = ""
+
+        private fun emit() {
+            setAddress(
+                regionName,
+                districtName,
+                countyName,
+                subCountyName,
+                parishName,
+                villageName
+            )
+        }
+
+        val regionPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = repo.watchRegions().map { list ->
+                list.map { PickerOption(id = it.regionCode, name = it.regionName) }
+            }
+        )
+
+        val districtPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = selectedRegionCode.flatMapLatest { rc ->
+                if (rc.isNullOrBlank()) flowOf(emptyList())
+                else repo.watchDistricts(rc).map { list ->
+                    list.map { PickerOption(id = it.districtCode, name = it.districtName) }
+                }
+            }
+        )
+
+        val districtSearchPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = repo.watchAllDistricts().map { list ->
+                list.map { PickerOption(id = it.districtCode, name = it.districtName) }
+            }
+        )
+
+        val villageSearchPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = repo.watchAllVillages().map { list ->
+                list.map { PickerOption(id = it.villageCode, name = it.villageName) }
+            }
+        )
+
+        val countyPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = selectedDistrictCode.flatMapLatest { dc ->
+                if (dc.isNullOrBlank()) flowOf(emptyList())
+                else repo.watchCounties(dc).map { list ->
+                    list.map { PickerOption(id = it.countyCode, name = it.countyName) }
+                }
+            }
+        )
+
+        val subCountyPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = selectedCountyCode.flatMapLatest { cc ->
+                if (cc.isNullOrBlank()) flowOf(emptyList())
+                else repo.watchSubcounties(cc).map { list ->
+                    list.map { PickerOption(id = it.subCountyCode, name = it.subCountyName) }
+                }
+            }
+        )
+
+        val parishPicker = PickerFeature(
+            scope = scope,
+            optionsFlow = selectedSubCountyCode.flatMapLatest { sc ->
+                if (sc.isNullOrBlank()) flowOf(emptyList())
+                else repo.watchParishes(sc).map { list ->
+                    list.map { PickerOption(id = it.parishCode, name = it.parishName) }
+                }
+            }
+        )
+
+        val villagePicker = PickerFeature(
+            scope = scope,
+            optionsFlow = selectedParishCode.flatMapLatest { pc ->
+                if (pc.isNullOrBlank()) flowOf(emptyList())
+                else repo.watchVillages(pc).map { list ->
+                    list.map { PickerOption(id = it.villageCode, name = it.villageName) }
+                }
+            }
+        )
+
+        fun onRegionPicked(opt: PickerOption) {
+            selectedRegionCode.value = opt.id
+            selectedDistrictCode.value = null
+            selectedCountyCode.value = null
+            selectedSubCountyCode.value = null
+            selectedParishCode.value = null
+
+            regionName = opt.name
+            districtName = ""
+            countyName = ""
+            subCountyName = ""
+            parishName = ""
+            villageName = ""
+
+            emit()
+        }
+
+        fun onDistrictPicked(opt: PickerOption) {
+            scope.launch {
+                val lookup = repo.getDistrictRegionByDistrictCode(opt.id)
+
+                selectedRegionCode.value = lookup?.regionCode ?: selectedRegionCode.value
+                selectedDistrictCode.value = opt.id
+                selectedCountyCode.value = null
+                selectedSubCountyCode.value = null
+                selectedParishCode.value = null
+
+                if (!lookup?.regionName.isNullOrBlank()) {
+                    regionName = lookup!!.regionName
+                }
+                districtName = lookup?.districtName ?: opt.name
+                countyName = ""
+                subCountyName = ""
+                parishName = ""
+                villageName = ""
+
+                districtSearchPicker.clearQuery()
+                emit()
+            }
+        }
+
+        fun onCountyPicked(opt: PickerOption) {
+            selectedCountyCode.value = opt.id
+            selectedSubCountyCode.value = null
+            selectedParishCode.value = null
+
+            countyName = opt.name
+            subCountyName = ""
+            parishName = ""
+            villageName = ""
+
+            emit()
+        }
+
+        fun onSubCountyPicked(opt: PickerOption) {
+            selectedSubCountyCode.value = opt.id
+            selectedParishCode.value = null
+
+            subCountyName = opt.name
+            parishName = ""
+            villageName = ""
+
+            emit()
+        }
+
+        fun onParishPicked(opt: PickerOption) {
+            selectedParishCode.value = opt.id
+
+            parishName = opt.name
+            villageName = ""
+
+            emit()
+        }
+
+        fun onVillagePicked(opt: PickerOption) {
+            scope.launch {
+                val lookup = repo.getVillageHierarchyByVillageCode(opt.id)
+
+                if (lookup == null) {
+                    villageName = opt.name
+                    villageSearchPicker.clearQuery()
+                    emit()
+                    return@launch
+                }
+
+                selectedRegionCode.value = lookup.regionCode
+                selectedDistrictCode.value = lookup.districtCode
+                selectedCountyCode.value = lookup.countyCode
+                selectedSubCountyCode.value = lookup.subCountyCode
+                selectedParishCode.value = lookup.parishCode
+
+                regionName = lookup.regionName
+                districtName = lookup.districtName
+                countyName = lookup.countyName
+                subCountyName = lookup.subCountyName
+                parishName = lookup.parishName
+                villageName = lookup.villageName
+
+                villageSearchPicker.clearQuery()
+                emit()
+            }
+        }
+
+        fun clearAll() {
+            selectedRegionCode.value = null
+            selectedDistrictCode.value = null
+            selectedCountyCode.value = null
+            selectedSubCountyCode.value = null
+            selectedParishCode.value = null
+
+            regionName = ""
+            districtName = ""
+            countyName = ""
+            subCountyName = ""
+            parishName = ""
+            villageName = ""
+
+            emit()
+        }
+    }
+
+    val ugAncestralPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+        _ui.value = _ui.value.copy(
+            memberAncestralRegion = r,
+            memberAncestralDistrict = d,
+            memberAncestralCounty = c,
+            memberAncestralSubCounty = s,
+            memberAncestralParish = p,
+            memberAncestralVillage = v
+        )
+    }
+
+    val ugRentalPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+        _ui.value = _ui.value.copy(
+            memberRentalRegion = r,
+            memberRentalDistrict = d,
+            memberRentalCounty = c,
+            memberRentalSubCounty = s,
+            memberRentalParish = p,
+            memberRentalVillage = v
+        )
+    }
     sealed class FamilyFormEvent {
         data class Saved(val id: String) : FamilyFormEvent()
         data class Error(val msg: String) : FamilyFormEvent()
@@ -69,6 +334,43 @@ class FamilyFormViewModel @Inject constructor(
                 familyId = GenerateId.generateId("family")
             )
         }
+    }
+
+    fun onFName(v: String) { _ui.value = _ui.value.copy(fName = v) }
+    fun onLName(v: String) { _ui.value = _ui.value.copy(lName = v) }
+    fun onCountry(v: String) { _ui.value = _ui.value.copy(country = v) }
+//    fun onGender(v: String) { _ui.value = _ui.value.copy(gender = v) }
+fun onGender(v: Gender) { _ui.value = _ui.value.copy(gender = v) }
+    fun onMemberAncestralCountryChanged(country: Country) {
+        if (country != Country.UGANDA) {
+            ugAncestralPicker.clearAll()
+        }
+
+        _ui.value = _ui.value.copy(
+            memberAncestralCountry = country.name,
+            memberAncestralRegion = "",
+            memberAncestralDistrict = "",
+            memberAncestralCounty = "",
+            memberAncestralSubCounty = "",
+            memberAncestralParish = "",
+            memberAncestralVillage = ""
+        )
+    }
+
+    fun onMemberRentalCountryChanged(country: Country) {
+        if (country != Country.UGANDA) {
+            ugRentalPicker.clearAll()
+        }
+
+        _ui.value = _ui.value.copy(
+            memberRentalCountry = country.name,
+            memberRentalRegion = "",
+            memberRentalDistrict = "",
+            memberRentalCounty = "",
+            memberRentalSubCounty = "",
+            memberRentalParish = "",
+            memberRentalVillage = ""
+        )
     }
 
     fun loadForEdit(familyId: String) {
@@ -92,13 +394,13 @@ class FamilyFormViewModel @Inject constructor(
     }
 
     fun onCaseReferenceNumber(v: String) { _ui.value = _ui.value.copy(caseReferenceNumber = v) }
-    fun onPrimaryContactHeadOfHousehold(v: String) {
-        _ui.value = _ui.value.copy(
-            primaryContactHeadOfHousehold = v,
-            headError = null
-        )
-    }
-    fun onAddressLocation(v: String) { _ui.value = _ui.value.copy(addressLocation = v) }
+//    fun onPrimaryContactHeadOfHousehold(v: String) {
+//        _ui.value = _ui.value.copy(
+//            primaryContactHeadOfHousehold = v,
+//            headError = null
+//        )
+//    }
+    fun onOccupationOrSchoolGrade(v: String) { _ui.value = _ui.value.copy(occupationOrSchoolGrade = v) }
     fun onIsBornAgain(v: Boolean) { _ui.value = _ui.value.copy(isBornAgain = v) }
     fun onPersonalPhone1(v: String) {
         _ui.value = _ui.value.copy(personalPhone1 = v.filter { it.isDigit() })
@@ -129,10 +431,10 @@ class FamilyFormViewModel @Inject constructor(
         val now = Timestamp.now()
         val state = _ui.value
 
-        if (state.primaryContactHeadOfHousehold.isBlank()) {
-            _ui.value = state.copy(headError = "Head of household is required")
-            return
-        }
+//        if (state.primaryContactHeadOfHousehold.isBlank()) {
+//            _ui.value = state.copy(headError = "Head of household is required")
+//            return
+//        }
 
         viewModelScope.launch {
             try {
@@ -143,6 +445,10 @@ class FamilyFormViewModel @Inject constructor(
 
                 val family = Family(
                     familyId = id,
+                    fName = state.fName,
+                    lName = state.lName,
+                    gender = state.gender,
+                    occupationOrSchoolGrade = state.occupationOrSchoolGrade,
                     caseReferenceNumber = state.caseReferenceNumber.trim(),
                     dateOfAssessment = state.dateOfAssessment ?: now,
                     primaryContactHeadOfHousehold = state.primaryContactHeadOfHousehold.trim(),
@@ -189,6 +495,10 @@ class FamilyFormViewModel @Inject constructor(
 private fun Family.toUi(): FamilyFormUiState =
     FamilyFormUiState(
         familyId = familyId,
+        fName = fName,
+        lName = lName,
+        gender = gender,
+        occupationOrSchoolGrade = occupationOrSchoolGrade,
         caseReferenceNumber = caseReferenceNumber,
         dateOfAssessment = dateOfAssessment,
         primaryContactHeadOfHousehold = primaryContactHeadOfHousehold,

@@ -13,6 +13,7 @@ import com.google.firebase.Timestamp
         Index(value = ["caseReferenceNumber"]),
         Index(value = ["fName"]),
         Index(value = ["lName"]),
+        Index(value = ["gender"]),
         Index(value = ["primaryContactHeadOfHousehold"]),
         Index(value = ["dateOfAssessment"]),
         Index(value = ["updatedAt"]),
@@ -30,6 +31,9 @@ data class Family(
     val lName: String = "",
     val primaryContactHeadOfHousehold: String = "",
     val addressLocation: String = "",
+
+    val gender: Gender = Gender.MALE,
+    val occupationOrSchoolGrade: String = "",
     val isBornAgain: Boolean = false,
 
     val profileImg: String = "",

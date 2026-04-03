@@ -385,6 +385,8 @@ abstract class AppDatabase : RoomDatabase() {
                         dateOfAssessment INTEGER,
                         fName TEXT NOT NULL,
                         lName TEXT NOT NULL,
+                        gender TEXT NOT NULL,
+                        occupationOrSchoolGrade TEXT NOT NULL,
                         primaryContactHeadOfHousehold TEXT NOT NULL,
                         addressLocation TEXT NOT NULL,
                         isBornAgain INTEGER NOT NULL,
