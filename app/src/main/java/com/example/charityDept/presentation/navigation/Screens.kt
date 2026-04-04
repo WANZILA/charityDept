@@ -268,6 +268,21 @@ sealed class Screen(val route: String) {
         ) = "child_assessment_detail/$childId/$generalId?mode=$mode&assessmentKey=$assessmentKey"
     }
 
+    object FamilyAssessmentHistory : Screen("family_assessment_history/{familyId}?mode={mode}") {
+        fun qa(familyId: String) = "family_assessment_history/$familyId?mode=QA"
+        fun observations(familyId: String) = "family_assessment_history/$familyId?mode=OBS"
+        fun all(familyId: String) = "family_assessment_history/$familyId?mode=ALL"
+    }
+
+    object FamilyAssessmentDetail : Screen("family_assessment_detail/{familyId}/{generalId}?mode={mode}&assessmentKey={assessmentKey}") {
+        fun open(
+            familyId: String,
+            generalId: String,
+            mode: String = "ALL",
+            assessmentKey: String = ""
+        ) = "family_assessment_detail/$familyId/$generalId?mode=$mode&assessmentKey=$assessmentKey"
+    }
+
 
     object Counts : Screen("counts/{mode}") {
         fun forRegions() = "counts/DISTRICTS"

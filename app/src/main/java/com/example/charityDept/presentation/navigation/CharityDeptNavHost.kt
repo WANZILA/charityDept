@@ -50,7 +50,8 @@ import kotlinx.coroutines.flow.first
 // add this import with the other family screen imports
 import com.example.charityDept.presentation.screens.families.FamilyMemberFormScreen
 import com.example.charityDept.presentation.screens.families.SingleFamilyDashboardScreen
-
+import com.example.charityDept.presentation.screens.families.assessments.FamilyAssessmentDetailScreen
+import com.example.charityDept.presentation.screens.families.assessments.FamilyAssessmentHistoryScreen
 val LocalNavController = staticCompositionLocalOf<NavController?> { null }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -463,7 +464,95 @@ fun CharityDeptNavHost(
                                     launchSingleTop = true
                                 }
                             },
+                            onQa = { familyId ->
+                                navController.navigate(Screen.FamilyAssessmentHistory.qa(familyId)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onObservations = { familyId ->
+                                navController.navigate(Screen.FamilyAssessmentHistory.observations(familyId)) {
+                                    launchSingleTop = true
+                                }
+                            },
                             navigateUp = { navController.navigateUp() }
+                        )
+                    }
+                    composable(
+                        route = Screen.FamilyAssessmentHistory.route,
+                        arguments = listOf(
+                            navArgument("familyId") { type = NavType.StringType },
+                            navArgument("mode") { type = NavType.StringType; defaultValue = "ALL" }
+                        )
+                    ) { backStackEntry ->
+                        val familyId = backStackEntry.arguments?.getString("familyId") ?: return@composable
+                        val mode = backStackEntry.arguments?.getString("mode") ?: "ALL"
+
+                        FamilyAssessmentHistoryScreen(
+                            familyId = familyId,
+                            mode = mode,
+                            navigateUp = {
+                                navController.navigate(Screen.SingleFamilyDashboard.createRoute(familyId)) {
+                                    popUpTo(Screen.FamilyAssessmentHistory.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            },
+                            onOpenSession = { generalId, assessmentKey ->
+                                navController.navigate(
+                                    Screen.FamilyAssessmentDetail.open(
+                                        familyId = familyId,
+                                        generalId = generalId,
+                                        mode = mode,
+                                        assessmentKey = assessmentKey
+                                    )
+                                ) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            onStartNew = { newGeneralId, assessmentKey ->
+                                navController.navigate(
+                                    Screen.FamilyAssessmentDetail.open(
+                                        familyId = familyId,
+                                        generalId = newGeneralId,
+                                        mode = mode,
+                                        assessmentKey = assessmentKey
+                                    )
+                                ) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        )
+                    }
+
+                    composable(
+                        route = Screen.FamilyAssessmentDetail.route,
+                        arguments = listOf(
+                            navArgument("familyId") { type = NavType.StringType },
+                            navArgument("generalId") { type = NavType.StringType },
+                            navArgument("mode") { type = NavType.StringType; defaultValue = "ALL" },
+                            navArgument("assessmentKey") { type = NavType.StringType; defaultValue = "" }
+                        )
+                    ) { backStackEntry ->
+                        val familyId = backStackEntry.arguments?.getString("familyId") ?: return@composable
+                        val generalId = backStackEntry.arguments?.getString("generalId") ?: return@composable
+                        val mode = backStackEntry.arguments?.getString("mode") ?: "ALL"
+                        val assessmentKey = backStackEntry.arguments?.getString("assessmentKey") ?: ""
+
+                        FamilyAssessmentDetailScreen(
+                            familyId = familyId,
+                            generalId = generalId,
+                            mode = mode,
+                            assessmentKey = assessmentKey,
+                            navigateUp = {
+                                val backRoute = when (mode) {
+                                    "QA" -> Screen.FamilyAssessmentHistory.qa(familyId)
+                                    "OBS" -> Screen.FamilyAssessmentHistory.observations(familyId)
+                                    else -> Screen.FamilyAssessmentHistory.all(familyId)
+                                }
+                                navController.navigate(backRoute) {
+                                    popUpTo(Screen.FamilyAssessmentDetail.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
                         )
                     }
 

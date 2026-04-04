@@ -53,9 +53,11 @@ fun SingleFamilyDashboardScreen(
     onEditFamily: (String) -> Unit,
     onAddMember: (String) -> Unit,
     onEditMember: (String, String) -> Unit,
+    onQa: (String) -> Unit,
+    onObservations: (String) -> Unit,
     navigateUp: () -> Unit,
     vm: SingleFamilyDashboardViewModel = hiltViewModel()
-) {
+)  {
     val ui by vm.ui.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -188,12 +190,22 @@ fun SingleFamilyDashboardScreen(
                                 ) {}
 
                                 DashboardCardLike(
-                                    title = "📝 Assessment",
+                                    title = "📝 Family Q&A",
                                     value = "",
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    // wire later
+                                    onQa(fid)
                                 }
+                            }
+                        }
+
+                        item {
+                            DashboardCardLike(
+                                title = "👀 Family Observations",
+                                value = "",
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                onObservations(fid)
                             }
                         }
 
