@@ -11,7 +11,7 @@ import com.example.charityDept.data.model.Event
 import com.example.charityDept.domain.repositories.online.AttendanceRepository
 import com.example.charityDept.domain.repositories.online.ChildrenRepository
 import com.example.charityDept.domain.repositories.online.EventsRepository
-import com.example.charityDept.core.Utils.Network.NetworkMonitorUtil
+import com.example.charityDept.core.utils.Network.NetworkMonitorUtil
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*

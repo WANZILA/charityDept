@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+//import com.google.firebase.Timestamp
 
 object ChildrenSeedLoader {
 
@@ -144,6 +145,9 @@ object ChildrenSeedLoader {
 
             // ===== Basic Info =====
             profileImg = optString("profileImg", ""),
+            profileImageStoragePath = optString("profileImageStoragePath", ""),
+            profileImageLocalPath = optString("profileImageLocalPath", ""),
+            profileImageUpdatedAt = optTimestamp("profileImageUpdatedAt"),
 
             fName = optString("fName", ""),
             lName = optString("lName", ""),
@@ -310,6 +314,31 @@ object ChildrenSeedLoader {
         val seconds = v / 1000L
         val nanos = ((v % 1000L).toInt()) * 1_000_000
         return Timestamp(seconds, nanos)
+    }
+
+    private fun JSONObject.optTimestamp(key: String): Timestamp? {
+        if (!has(key) || isNull(key)) return null
+
+        return when (val value = opt(key)) {
+            is Number -> Timestamp(value.toLong() / 1000, 0)
+            is String -> value.toLongOrNull()?.let { Timestamp(it / 1000, 0) }
+            is JSONObject -> {
+                val seconds = when (val s = value.opt("seconds")) {
+                    is Number -> s.toLong()
+                    is String -> s.toLongOrNull()
+                    else -> null
+                } ?: return null
+
+                val nanos = when (val n = value.opt("nanoseconds")) {
+                    is Number -> n.toInt()
+                    is String -> n.toIntOrNull()
+                    else -> 0
+                } ?: 0
+
+                Timestamp(seconds, nanos)
+            }
+            else -> null
+        }
     }
 
     private inline fun <T> JSONObject.optEnum(

@@ -14,7 +14,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.core.utils.FormValidatorUtil
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.core.sync.event.EventSyncScheduler
 import com.example.charityDept.core.sync.event.EventSyncWorker
 import com.example.charityDept.data.model.Event

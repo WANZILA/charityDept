@@ -1,4 +1,4 @@
-package com.example.charityDept.core.Utils
+package com.example.charityDept.core.utils
 
 import java.util.UUID
 

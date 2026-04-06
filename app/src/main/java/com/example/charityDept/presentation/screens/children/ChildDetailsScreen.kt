@@ -22,6 +22,7 @@ import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlinx.coroutines.flow.collectLatest
+import com.example.charityDept.presentation.components.common.ProfileImageSection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,7 +143,20 @@ private fun DetailsContent(child: Child) {
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    )
+    {
+        item {
+            ProfileImageSection(
+                profileImageLocalPath = child.profileImageLocalPath,
+                profileImg = child.profileImg,
+                displayName = listOf(child.fName, child.lName)
+                    .map { it.trim() }
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ")
+                    .ifBlank { "Child profile" },
+                showImageSourceText = true
+            )
+        }
         item {
             CollapsibleSection("Basic Info", openBasic, { openBasic = !openBasic }) {
                 Field("First name", child.fName.ifBlank { "-" })

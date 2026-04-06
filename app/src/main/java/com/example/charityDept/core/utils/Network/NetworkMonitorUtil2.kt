@@ -1,8 +1,4 @@
-package com.example.charityDept.core.Utils.Network
-
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
+package com.example.charityDept.core.utils.Network
 
 //class NetworkMonitor @Inject constructor(@ApplicationContext private val ctx: Context) {
 //    fun isOnline(): Boolean {

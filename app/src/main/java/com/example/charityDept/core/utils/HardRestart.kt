@@ -1,4 +1,4 @@
-package com.example.charityDept.core.Utils
+package com.example.charityDept.core.utils
 
 import android.app.PendingIntent
 import android.content.Context

@@ -1,6 +1,6 @@
 package com.example.charityDept.domain.repositories.offline
 
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.data.local.dao.FamilyDao
 import com.example.charityDept.data.model.Family
 import com.example.charityDept.data.model.FamilyMember

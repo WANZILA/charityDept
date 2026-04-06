@@ -35,6 +35,27 @@ import com.example.charityDept.presentation.screens.children.ChildFormViewModel
 import com.google.firebase.Timestamp
 import java.text.SimpleDateFormat
 import java.util.Locale
+import android.Manifest
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import coil.compose.AsyncImage
+import com.example.charityDept.core.utils.ChildImageFileHelper
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
+import java.io.File
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,6 +74,150 @@ fun ChildFormScreen(
     val state = vm.ui
     val snackbarHostState = remember { SnackbarHostState() }
     val savingOrLoading = state.saving || state.loading
+
+    val context = LocalContext.current
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingCameraTempPath by remember { mutableStateOf<String?>(null) }
+
+    fun ensureChildId(): String {
+        if (vm.ui.childId.isBlank()) {
+            vm.ensureNewIdIfNeeded()
+        }
+        return vm.ui.childId
+    }
+
+    @Suppress("DEPRECATION")
+    val cropImageLauncher =
+        rememberLauncherForActivityResult(CropImageContract()) { result ->
+            if (result.isSuccessful) {
+                val croppedUri = result.uriContent
+                if (croppedUri != null) {
+                    runCatching {
+                        val childId = ensureChildId()
+                        val localPath = ChildImageFileHelper.copyUriToChildProfileStagedFile(
+                            context = context,
+                            sourceUri = croppedUri,
+                            childId = childId
+                        )
+                        vm.onProfileImageSelected(localPath)
+                    }.onFailure {
+                        vm.onError(it.message ?: "Failed to process cropped image")
+                    }
+                } else {
+                    vm.onError("Crop succeeded but no image was returned")
+                }
+            } else {
+                vm.onError(result.error?.message ?: "Image crop failed")
+            }
+        }
+
+    fun launchCrop(sourceUri: Uri) {
+        runCatching {
+            val options = CropImageOptions().apply {
+                cropShape = CropImageView.CropShape.OVAL
+                fixAspectRatio = true
+                aspectRatioX = 1
+                aspectRatioY = 1
+                outputCompressFormat = Bitmap.CompressFormat.JPEG
+                outputCompressQuality = 85
+                outputRequestWidth = 640
+                outputRequestHeight = 640
+                minCropWindowWidth = 320
+                minCropWindowHeight = 320
+                minCropResultWidth = 320
+                minCropResultHeight = 320
+                noOutputImage = false
+            }
+
+            cropImageLauncher.launch(
+                CropImageContractOptions(
+                    uri = sourceUri,
+                    cropImageOptions = options
+                )
+            )
+        }.onFailure {
+            vm.onError(it.message ?: "Unable to open image cropper")
+        }
+    }
+
+    val galleryLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                launchCrop(uri)
+            }
+        }
+
+    val takePictureLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            val cameraTempPath = pendingCameraTempPath
+            pendingCameraUri = null
+            pendingCameraTempPath = null
+
+            if (success && !cameraTempPath.isNullOrBlank()) {
+                launchCrop(Uri.fromFile(File(cameraTempPath)))
+            } else {
+                vm.onError("Camera capture failed")
+            }
+        }
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                runCatching {
+                    val childId = ensureChildId()
+                    val target = ChildImageFileHelper.createCameraTempTarget(
+                        context = context,
+                        childId = childId
+                    )
+                    pendingCameraUri = target.uri
+                    pendingCameraTempPath = target.absolutePath
+                    takePictureLauncher.launch(target.uri)
+                }.onFailure {
+                    vm.onError(it.message ?: "Unable to open camera")
+                }
+            } else {
+                vm.onError("Camera permission denied")
+            }
+        }
+
+    fun openGallery() {
+        galleryLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
+
+    fun openCamera() {
+        val granted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (granted) {
+            runCatching {
+                val childId = ensureChildId()
+                val target = ChildImageFileHelper.createCameraTempTarget(
+                    context = context,
+                    childId = childId
+                )
+                pendingCameraUri = target.uri
+                pendingCameraTempPath = target.absolutePath
+                takePictureLauncher.launch(target.uri)
+            }.onFailure {
+                vm.onError(it.message ?: "Unable to open camera")
+            }
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    fun discardStagedAndExit(exit: () -> Unit) {
+        vm.discardStagedProfileImage()
+        exit()
+    }
+
+    BackHandler {
+        discardStagedAndExit(navigateUp)
+    }
 
     LaunchedEffect(childIdArg) {
         if (childIdArg.isNullOrBlank()) vm.ensureNewIdIfNeeded() else vm.loadForEdit(childIdArg)
@@ -79,7 +244,7 @@ fun ChildFormScreen(
                     if (childIdArg.isNullOrBlank()) Text("Register Child") else Text("Edit Child")
                 },
                 navigationIcon = {
-                    IconButton(onClick = navigateUp) {
+                    IconButton(onClick = { discardStagedAndExit(navigateUp) }) {
                         Icon(
                             Icons.Default.ArrowCircleLeft,
                             contentDescription = "Back",
@@ -127,7 +292,13 @@ fun ChildFormScreen(
             Spacer(Modifier.height(12.dp))
 
             when (step) {
-                RegistrationStatus.BASICINFOR -> StepBasicInfo(uiState = ui, vm = vm)
+//                RegistrationStatus.BASICINFOR -> StepBasicInfo(uiState = ui, vm = vm)
+                RegistrationStatus.BASICINFOR -> StepBasicInfo(
+                    uiState = ui,
+                    vm = vm,
+                    onOpenGallery = ::openGallery,
+                    onOpenCamera = ::openCamera
+                )
                 RegistrationStatus.BACKGROUND -> StepBackground(uiState = ui, vm = vm)
                 RegistrationStatus.EDUCATION -> StepEducation(uiState = ui, vm = vm)
                 RegistrationStatus.FAMILY -> StepFamily(uiState = ui, vm = vm)
@@ -210,8 +381,15 @@ private fun StepHeader(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun StepBasicInfo(uiState: ChildFormUiState, vm: ChildFormViewModel) {
+private fun StepBasicInfo(
+    uiState: ChildFormUiState,
+    vm: ChildFormViewModel,
+    onOpenGallery: () -> Unit,
+    onOpenCamera: () -> Unit
+) {
     val scroll = rememberScrollState()
+
+
     Column(
         Modifier
             .fillMaxSize()
@@ -221,6 +399,12 @@ private fun StepBasicInfo(uiState: ChildFormUiState, vm: ChildFormViewModel) {
     ) {
         val streetDisplay = vm.ui.street.trim().ifBlank { "Tap to choose Street" }
         var showStreetDialog by remember { mutableStateOf(false) }
+        ChildProfilePhotoSection(
+            uiState = uiState,
+            onOpenGallery = onOpenGallery,
+            onOpenCamera = onOpenCamera,
+            onClearPhoto = vm::clearProfilePhoto
+        )
 
         AppTextField(
             value = uiState.fName,

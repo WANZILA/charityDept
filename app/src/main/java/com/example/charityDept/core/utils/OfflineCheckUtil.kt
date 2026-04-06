@@ -1,5 +1,5 @@
 // com/example/zionkids/core/Utils/Network.kt (file name can be anything)
-package com.example.charityDept.core.Utils
+package com.example.charityDept.core.utils
 
 import com.google.firebase.firestore.FirebaseFirestoreException
 

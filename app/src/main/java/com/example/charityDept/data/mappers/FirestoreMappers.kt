@@ -115,7 +115,12 @@ fun DocumentSnapshot.toChildOrNull(): Child? {
         childId = str("childId") ?: id,
 
         // ===== Basic Info =====
+        // ===== Basic Info =====
         profileImg = str("profileImg") ?: "",
+        profileImageStoragePath = str("profileImageStoragePath") ?: "",
+        profileImageLocalPath = str("profileImageLocalPath") ?: "",
+        profileImageUpdatedAt = ts("profileImageUpdatedAt"),
+
 
         fName = str("fName") ?: "",
         lName = str("lName") ?: "",
@@ -398,7 +403,11 @@ fun Child.toFirestoreMapPatch(): Map<String, Any> = buildMap {
     fun putIfNotNull(key: String, v: Any?) { if (v != null) put(key, v) }
 
     // ===== Basic Info =====
+    // ===== Basic Info =====
     putIfNotBlank("profileImg", profileImg)
+    putIfNotBlank("profileImageStoragePath", profileImageStoragePath)
+    putIfNotBlank("profileImageLocalPath", profileImageLocalPath)
+    putIfNotNull("profileImageUpdatedAt", profileImageUpdatedAt)
     putIfNotBlank("fName", fName)
     putIfNotBlank("lName", lName)
     putIfNotBlank("oName", oName)

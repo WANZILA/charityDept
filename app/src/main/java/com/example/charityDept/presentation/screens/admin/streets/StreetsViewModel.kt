@@ -2,7 +2,7 @@ package com.example.charityDept.presentation.screens.admin.streets
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.core.utils.picker.PickerOption
 import com.example.charityDept.data.model.Street
 import com.example.charityDept.domain.repositories.online.StreetsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel

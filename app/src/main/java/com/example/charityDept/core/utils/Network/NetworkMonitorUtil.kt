@@ -1,6 +1,6 @@
 //package com.example.charityDept.core.Utils.Network
 
-package com.example.charityDept.core.Utils.Network
+package com.example.charityDept.core.utils.Network
 
 import android.annotation.SuppressLint
 import android.content.Context

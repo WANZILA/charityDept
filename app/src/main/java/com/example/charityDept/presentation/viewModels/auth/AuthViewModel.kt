@@ -3,12 +3,9 @@ package com.example.charityDept.presentation.viewModels.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.charityDept.core.Utils.Network.NetworkMonitorUtil
+import com.example.charityDept.core.utils.Network.NetworkMonitorUtil
 import com.example.charityDept.core.di.AppVersionCode
 import com.example.charityDept.core.di.UsersRef
-import com.example.charityDept.core.sync.ChildrenSyncScheduler
-import com.example.charityDept.core.sync.attendance.AttendanceSyncScheduler
-import com.example.charityDept.core.sync.event.EventSyncScheduler
 import com.example.charityDept.data.model.AssignedRole
 import com.example.charityDept.data.model.UserProfile
 import com.example.charityDept.domain.repositories.online.AuthRepository

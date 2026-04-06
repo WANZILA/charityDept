@@ -1,6 +1,6 @@
 package com.example.charityDept.domain.repositories.online
 
-import com.example.charityDept.core.Utils.isOfflineError
+import com.example.charityDept.core.utils.isOfflineError
 import com.example.charityDept.core.di.AttendanceRef
 import com.example.charityDept.data.model.Attendance
 import com.example.charityDept.data.model.AttendanceStatus

@@ -21,8 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.rememberAsyncImagePainter
-import com.example.charityDept.core.Utils.picker.PickerFeature
-import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.core.utils.picker.PickerFeature
+import com.example.charityDept.core.utils.picker.PickerOption
 
 
 @OptIn(ExperimentalFoundationApi::class)

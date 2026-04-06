@@ -1,4 +1,4 @@
-package com.example.charityDept.core.Utils.picker
+package com.example.charityDept.core.utils.picker
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*

@@ -1,4 +1,4 @@
-package com.example.charityDept.core.Utils
+package com.example.charityDept.core.utils
 
 import com.google.firebase.firestore.*
 import kotlinx.coroutines.tasks.await

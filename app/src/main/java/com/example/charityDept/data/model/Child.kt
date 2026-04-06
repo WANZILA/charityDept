@@ -42,6 +42,9 @@ data class Child(
 
     // ===== Basic Info =====
     val profileImg: String = "",
+    val profileImageStoragePath: String = "",
+    val profileImageLocalPath: String = "",
+    val profileImageUpdatedAt: Timestamp? = null,
 
     val fName: String = "",
     val lName: String = "",

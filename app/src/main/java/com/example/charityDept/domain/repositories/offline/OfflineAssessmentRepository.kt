@@ -1,6 +1,6 @@
 package com.example.charityDept.domain.repositories.offline
 
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.data.local.dao.AssessmentAnswerDao
 import com.example.charityDept.data.local.dao.AssessmentQuestionDao
 import com.example.charityDept.data.local.dao.AssessmentSessionRow
@@ -8,7 +8,6 @@ import com.example.charityDept.data.local.dao.AssessmentToolOption
 import com.example.charityDept.data.model.AssessmentAnswer
 import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.Flow
-import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.distinctUntilChanged

@@ -9,9 +9,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.core.utils.FormValidatorUtil
-import com.example.charityDept.core.Utils.GenerateId
-import com.example.charityDept.core.Utils.picker.PickerFeature
-import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.core.utils.GenerateId
+import com.example.charityDept.core.utils.picker.PickerFeature
+import com.example.charityDept.core.utils.picker.PickerOption
 import com.example.charityDept.data.model.*
 import com.example.charityDept.domain.repositories.offline.OfflineChildrenRepository
 import com.example.charityDept.domain.repositories.offline.OfflineUgAdminRepository
@@ -31,6 +31,7 @@ import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.TimeZone
 import javax.inject.Inject
+import com.example.charityDept.core.utils.ChildImageFileHelper
 
 private const val MAX_AGE = 25
 
@@ -636,8 +637,20 @@ class ChildFormViewModel @Inject constructor(
         if (ui.isNew && ui.childId.isBlank()) ensureNewIdIfNeeded()
         val now = Timestamp.now()
         val id = ui.childId
-        val child = buildChild(id = id, now = now, status = ui.registrationStatus)
 
+        val stagedPath = ui.profileImageStagedLocalPath
+        if (stagedPath.isNotBlank()) {
+            val promotedPath = ChildImageFileHelper.promoteChildProfileStagedFile(appContext, id)
+            if (!promotedPath.isNullOrBlank()) {
+                ui = ui.copy(
+                    profileImageLocalPath = promotedPath,
+                    profileImageStagedLocalPath = "",
+                    profileImageUpdatedAt = Timestamp.now()
+                )
+            }
+        }
+
+        val child = buildChild(id = id, now = now, status = ui.registrationStatus)
         runCatching { repo.upsert(child, isNew = ui.isNew) }
             .onSuccess {
                 ui = ui.copy(saving = false, childId = id, isNew = false)
@@ -653,6 +666,37 @@ class ChildFormViewModel @Inject constructor(
     fun finish() = save()
 
     // inside ChildFormViewModel (same file)
+    fun onProfileImageSelected(localPath: String) {
+        ui = ui.copy(
+            profileImageStagedLocalPath = localPath,
+            error = null
+        )
+    }
+
+    fun clearProfilePhoto() {
+        if (ui.childId.isNotBlank()) {
+            ChildImageFileHelper.deleteChildProfileStagedFile(appContext, ui.childId)
+        }
+        ui = ui.copy(
+            profileImg = "",
+            profileImageStoragePath = "",
+            profileImageLocalPath = "",
+            profileImageStagedLocalPath = "",
+            profileImageUpdatedAt = null
+        )
+    }
+
+    fun discardStagedProfileImage() {
+        if (ui.childId.isNotBlank()) {
+            ChildImageFileHelper.deleteChildProfileStagedFile(appContext, ui.childId)
+        }
+        ui = ui.copy(profileImageStagedLocalPath = "")
+    }
+
+    fun onError(msg: String) {
+        ui = ui.copy(error = msg)
+        _events.trySend(ChildFormEvent.Error(msg))
+    }
 
 
     private fun buildChild(id: String, now: Timestamp, status: RegistrationStatus): Child {
@@ -661,8 +705,13 @@ class ChildFormViewModel @Inject constructor(
        return   Child(
             childId = id,
 
-            profileImg = ui.profileImg,
-            fName = ui.fName.trim(),
+           profileImg = ui.profileImg,
+           profileImageStoragePath = ui.profileImageStoragePath,
+           profileImageLocalPath = ui.profileImageLocalPath,
+           profileImageUpdatedAt = ui.profileImageUpdatedAt,
+//           profileImageStagedLocalPath = ui.profileImageStagedLocalPath,
+           fName = ui.fName.trim(),
+
             lName = ui.lName.trim(),
             oName = ui.oName.trim(),
             gender = ui.gender,
@@ -804,7 +853,12 @@ class ChildFormViewModel @Inject constructor(
     private fun ChildFormUiState.from(c: Child) = copy(
         childId = c.childId,
         profileImg = c.profileImg,
+        profileImageStoragePath = c.profileImageStoragePath,
+        profileImageLocalPath = c.profileImageLocalPath,
+        profileImageUpdatedAt = c.profileImageUpdatedAt,
+//        profileImageStagedLocalPath = c.profileImageStagedLocalPath,
         fName = c.fName,
+
         lName = c.lName,
         oName = c.oName,
         gender = c.gender,
@@ -951,6 +1005,10 @@ data class ChildFormUiState(
 
     val childId: String = "",
     val profileImg: String = "",
+    val profileImageStoragePath: String = "",
+    val profileImageLocalPath: String = "",
+    val profileImageUpdatedAt: Timestamp? = null,
+    val profileImageStagedLocalPath: String = "",
 
     val fName: String = "",
     val lName: String = "",

@@ -2,7 +2,7 @@ package com.example.charityDept.domain.repositories.online
 
 import android.util.Log
 import com.example.charityDept.core.di.Streets // Qualifier for the CollectionReference
-import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.core.utils.picker.PickerOption
 import com.example.charityDept.data.mappers.toFirestoreMap
 import com.example.charityDept.data.mappers.toStreet
 import com.example.charityDept.data.mappers.toStreets

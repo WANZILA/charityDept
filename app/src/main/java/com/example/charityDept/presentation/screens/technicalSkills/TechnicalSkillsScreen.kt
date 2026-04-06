@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.data.model.TechnicalSkill
 //import com.example.upliftadmin.data.models.TechnicalSkill
 import kotlinx.coroutines.launch

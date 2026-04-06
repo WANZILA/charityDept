@@ -2,7 +2,7 @@ package com.example.charityDept.presentation.screens.attendance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.charityDept.core.Utils.Network.NetworkMonitorUtil
+import com.example.charityDept.core.utils.Network.NetworkMonitorUtil
 import com.example.charityDept.data.model.AttendanceStatus
 import com.example.charityDept.data.model.Child
 import com.example.charityDept.data.model.Event

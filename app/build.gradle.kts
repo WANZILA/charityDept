@@ -109,7 +109,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.27.0")
 
     //croping images
-    implementation("com.github.CanHub:Android-Image-Cropper:4.0.0")
+//    implementation("com.github.CanHub:Android-Image-Cropper:4.0.0")
 
     /// ADDED (Room KTX for coroutines/transactions)
     implementation("androidx.room:room-ktx:2.6.1")
@@ -137,6 +137,11 @@ dependencies {
     /// ADDED (Optional structured logging hooks for metrics: TTFI, queue length, retries)
     implementation("com.jakewharton.timber:timber:5.0.1")
 
+
+    //image
+    implementation("io.coil-kt:coil-compose:2.7.0")
+//    implementation("com.canhub.cropper:canhub-android-image-cropper:4.6.0")
+    implementation("com.vanniktech:android-image-cropper:4.7.0")
 //    implementation("androidx.hilt:hilt-work:1.2.0")        // ← required for Hilt+WorkManager
 //    kapt("androidx.hilt:hilt-compiler:1.2.0" )
 // ← THIS is often miss

@@ -16,7 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.data.model.Street
 import com.example.charityDept.presentation.screens.widgets.BulkConfirmDialog
 import kotlinx.coroutines.launch

@@ -2,7 +2,7 @@ package com.example.charityDept.domain.repositories.online
 
 import android.util.Log
 import com.example.charityDept.core.di.TechnicalSkills
-import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.core.utils.picker.PickerOption
 import com.example.charityDept.data.mappers.toFirestoreMap
 import com.example.charityDept.data.mappers.toTechnicalSkill
 import com.example.charityDept.data.mappers.toTechnicalSkills

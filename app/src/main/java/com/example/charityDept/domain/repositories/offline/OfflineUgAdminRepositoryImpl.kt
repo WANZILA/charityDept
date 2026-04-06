@@ -1,6 +1,6 @@
 package com.example.charityDept.data.repositories.offline
 
-import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.core.utils.picker.PickerOption
 import com.example.charityDept.data.local.dao.UgAdminDao
 import com.example.charityDept.data.model.*
 import com.example.charityDept.domain.repositories.offline.OfflineUgAdminRepository

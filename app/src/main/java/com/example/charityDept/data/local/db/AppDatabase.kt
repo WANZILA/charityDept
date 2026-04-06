@@ -348,6 +348,12 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE children ADD COLUMN personalPhone1 TEXT NOT NULL DEFAULT ''")
                 db.execSQL("ALTER TABLE children ADD COLUMN personalPhone2 TEXT NOT NULL DEFAULT ''")
 
+                db.execSQL("ALTER TABLE children ADD COLUMN profileImageStoragePath TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE children ADD COLUMN profileImageLocalPath  TEXT NOT NULL DEFAULT ''")
+                db.execSQL("ALTER TABLE children ADD COLUMN profileImageUpdatedAt INTEGER NOT NULL DEFAULT 0")
+
+
+
                 db.execSQL(
                     """
                     UPDATE children

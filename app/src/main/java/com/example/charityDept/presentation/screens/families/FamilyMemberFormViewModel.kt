@@ -2,7 +2,7 @@ package com.example.charityDept.presentation.screens.families
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.data.model.FamilyMember
 import com.example.charityDept.data.model.Gender
 import com.example.charityDept.domain.repositories.offline.OfflineFamiliesRepository

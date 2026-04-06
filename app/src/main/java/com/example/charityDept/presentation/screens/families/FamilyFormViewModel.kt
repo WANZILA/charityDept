@@ -2,7 +2,7 @@ package com.example.charityDept.presentation.screens.families
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.data.model.Family
 import com.example.charityDept.domain.repositories.offline.OfflineFamiliesRepository
 import com.google.firebase.Timestamp
@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.example.charityDept.core.Utils.picker.PickerFeature
-import com.example.charityDept.core.Utils.picker.PickerOption
+import com.example.charityDept.core.utils.picker.PickerFeature
+import com.example.charityDept.core.utils.picker.PickerOption
 import com.example.charityDept.data.model.Country
 import com.example.charityDept.data.model.Gender
 import com.example.charityDept.domain.repositories.offline.OfflineUgAdminRepository

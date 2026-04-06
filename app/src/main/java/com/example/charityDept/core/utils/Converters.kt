@@ -1,4 +1,4 @@
-package com.example.charityDept.core.Utils
+package com.example.charityDept.core.utils
 
 import androidx.room.TypeConverter
 import com.example.charityDept.data.model.*

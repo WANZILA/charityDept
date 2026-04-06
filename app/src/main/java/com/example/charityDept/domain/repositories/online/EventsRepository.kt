@@ -1,6 +1,6 @@
 package com.example.charityDept.domain.repositories.online
 
-import com.example.charityDept.core.Utils.GenerateId
+import com.example.charityDept.core.utils.GenerateId
 import com.example.charityDept.core.di.AttendanceRef
 import com.example.charityDept.core.di.EventsRef
 import com.example.charityDept.data.mappers.toEvents
