@@ -399,12 +399,7 @@ private fun StepBasicInfo(
     ) {
         val streetDisplay = vm.ui.street.trim().ifBlank { "Tap to choose Street" }
         var showStreetDialog by remember { mutableStateOf(false) }
-        ChildProfilePhotoSection(
-            uiState = uiState,
-            onOpenGallery = onOpenGallery,
-            onOpenCamera = onOpenCamera,
-            onClearPhoto = vm::clearProfilePhoto
-        )
+
 
         AppTextField(
             value = uiState.fName,

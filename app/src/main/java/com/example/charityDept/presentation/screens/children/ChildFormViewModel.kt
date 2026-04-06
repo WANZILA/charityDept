@@ -450,7 +450,10 @@ class ChildFormViewModel @Inject constructor(
         ui = ui.copy(loading = true, error = null)
         val existing = repo.getChildFast(childId)
         ui = if (existing != null) {
-            ui.from(existing).copy(loading = false)
+            ui.from(existing).copy(
+                loading = false,
+                profileImageStagedLocalPath = ""
+                )
         } else {
             ui.copy(loading = false, error = "Child not found")
         }
@@ -640,7 +643,10 @@ class ChildFormViewModel @Inject constructor(
 
         val stagedPath = ui.profileImageStagedLocalPath
         if (stagedPath.isNotBlank()) {
-            val promotedPath = ChildImageFileHelper.promoteChildProfileStagedFile(appContext, id)
+//            val promotedPath = ChildImageFileHelper.promoteChildProfileStagedFile(appContext, id)
+            val promotedPath = ChildImageFileHelper
+                .promoteClientProfileStagedFile(appContext, id)
+
             if (!promotedPath.isNullOrBlank()) {
                 ui = ui.copy(
                     profileImageLocalPath = promotedPath,
