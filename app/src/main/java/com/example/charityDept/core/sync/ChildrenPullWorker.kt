@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.example.charityDept.core.utils.ChildImageFileHelper
 import com.example.charityDept.data.local.dao.ChildDao
 import com.example.charityDept.data.mappers.toChildOrNull
 import com.example.charityDept.data.model.Child
@@ -15,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.Source
+import com.google.firebase.storage.FirebaseStorage
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.EntryPoint
@@ -24,6 +26,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 @HiltWorker
@@ -74,6 +77,58 @@ class ChildrenPullWorker @AssistedInject constructor(
 
     private fun tsToMs(ts: Timestamp): Long {
         return (ts.seconds * 1000L) + (ts.nanoseconds / 1_000_000L)
+    }
+
+    private fun hasUsableLocalProfileImage(localPath: String): Boolean {
+        return localPath.isNotBlank() && File(localPath).exists()
+    }
+
+    private suspend fun localizeChildProfileImage(
+        remote: Child,
+        local: Child?
+    ): String {
+        val remoteStoragePath = remote.profileImageStoragePath
+        if (remoteStoragePath.isBlank()) {
+            return local?.profileImageLocalPath.orEmpty()
+        }
+
+        val existingLocalPath = local?.profileImageLocalPath.orEmpty()
+        val existingLocalOk = hasUsableLocalProfileImage(existingLocalPath)
+
+        val sameStoragePath = local?.profileImageStoragePath == remote.profileImageStoragePath
+        val sameUpdatedAt =
+            local?.profileImageUpdatedAt?.seconds == remote.profileImageUpdatedAt?.seconds &&
+                    local?.profileImageUpdatedAt?.nanoseconds == remote.profileImageUpdatedAt?.nanoseconds
+
+        if (existingLocalOk && sameStoragePath && sameUpdatedAt) {
+            return existingLocalPath
+        }
+
+        return try {
+            val destFile = ChildImageFileHelper.getChildProfileFile(
+                applicationContext,
+                remote.childId
+            )
+
+            FirebaseStorage.getInstance()
+                .reference
+                .child(remoteStoragePath)
+                .getFile(destFile)
+                .await()
+
+            Log.d(
+                APP_TAG,
+                "$TAG downloaded profile image for childId=${remote.childId} to ${destFile.absolutePath}"
+            )
+            destFile.absolutePath
+        } catch (e: Exception) {
+            Log.w(
+                APP_TAG,
+                "$TAG failed to download profile image for childId=${remote.childId} path=$remoteStoragePath",
+                e
+            )
+            if (existingLocalOk) existingLocalPath else ""
+        }
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
@@ -229,30 +284,52 @@ class ChildrenPullWorker @AssistedInject constructor(
 
                 if (remoteList.isNotEmpty()) {
                     val ids = remoteList.map { it.childId }
-                    val localsById = childDao.getByIds(ids).associateBy { it.childId }
+                        .filter { it.isNotBlank() }
+                        .distinct()
+
+                    val localList =
+                        if (ids.isNotEmpty()) childDao.getByIds(ids) else emptyList()
+
+                    val localsById = localList.associateBy { it.childId }
+
+                    val localizedRemoteList = remoteList.map { remote ->
+                        val local = localsById[remote.childId]
+                        val localizedPath = if (!remote.isDeleted) {
+                            localizeChildProfileImage(remote, local)
+                        } else {
+                            ""
+                        }
+
+                        remote.copy(
+                            profileImageLocalPath = localizedPath
+                        )
+                    }
 
                     // ✅ Merge rule:
                     // - never overwrite local dirty
                     // - else: higher version wins
                     // - if version ties: newer updatedAt wins
                     // - if still ties: keep local, and prevent tombstone resurrection on ties
-                    val merged = remoteList.map { remote ->
+                    // - if remote now has a localized path and local does not, prefer remote
+                    val merged = localizedRemoteList.map { remote ->
                         val local = localsById[remote.childId]
                         when {
                             local == null -> remote
 
-                            // Local edits always win
                             local.isDirty -> local
+
+                            remote.isDeleted && !local.isDeleted -> remote
 
                             remote.version > local.version -> remote
                             remote.version < local.version -> local
 
-                            // version tie => compare updatedAt
                             tsToMs(remote.updatedAt) > tsToMs(local.updatedAt) -> remote
                             tsToMs(remote.updatedAt) < tsToMs(local.updatedAt) -> local
 
-                            // tie-tie: prevent resurrection
                             local.isDeleted && !remote.isDeleted -> local
+
+                            remote.profileImageLocalPath.isNotBlank() &&
+                                    local.profileImageLocalPath.isBlank() -> remote
 
                             else -> local
                         }
@@ -261,7 +338,6 @@ class ChildrenPullWorker @AssistedInject constructor(
                     childDao.upsertAll(merged)
                     totalUpserts += merged.size
                 }
-
                 Log.d(
                     TAG,
                     "page=$page remoteDocs=${remoteList.size} failedToMap=${failedDocIds.size} failedIds=${failedDocIds.joinToString()}"

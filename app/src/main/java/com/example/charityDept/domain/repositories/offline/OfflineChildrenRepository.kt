@@ -30,17 +30,17 @@ import com.example.charityDept.data.local.dao.KpiDao
 import com.example.charityDept.domain.repositories.online.ChildrenSnapshot   // /// CHANGED: reuse existing snapshot model
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.Calendar
+import com.example.charityDept.domain.repositories.online.ChildrenRepository
+import timber.log.Timber
 
-// /// CHANGED: remove local duplicate to prevent type conflicts with imports elsewhere
-// data class ChildrenSnapshot(
-//     val children: List<Child>,
-//     val fromCache: Boolean,
-//     val hasPendingWrites: Boolean
-// )
 
 interface OfflineChildrenRepository {
     suspend fun getChildFast(id: String): Child?
-
+    suspend fun syncChildProfileImage(childId: String): Child
+    suspend fun clearChildProfileImage(
+        childId: String,
+        previousStoragePath: String
+    ): Child
     fun observeChild(id: String): kotlinx.coroutines.flow.Flow<com.example.charityDept.data.model.Child?>
 
     fun streamChildren(): Flow<List<Child>>
@@ -83,11 +83,73 @@ class OfflineChildrenRepositoryImpl @Inject constructor(
     private val childDao: ChildDao,
     private val attendanceDao: AttendanceDao,
     private val kpiDao: KpiDao,
+    private val onlineRepo: ChildrenRepository,
     @ApplicationContext private val appContext: Context
 ) : OfflineChildrenRepository {
 
     override suspend fun getChildFast(id: String): Child? =
         childDao.getById(id)
+
+    override suspend fun syncChildProfileImage(childId: String): Child {
+        val existing = childDao.getById(childId)
+            ?: error("Cannot sync profile image. Child not found: $childId")
+
+        if (existing.profileImageLocalPath.isBlank()) {
+            return existing
+        }
+
+        val now = Timestamp.now()
+        val upload = onlineRepo.uploadChildProfileImage(
+            childId = childId,
+            localPath = existing.profileImageLocalPath,
+            previousStoragePath = existing.profileImageStoragePath
+        )
+
+        val updated = existing.copy(
+            profileImg = upload.downloadUrl,
+            profileImageStoragePath = upload.storagePath,
+            profileImageUpdatedAt = now,
+            updatedAt = now,
+            isDirty = true,
+            version = (existing.version + 1).coerceAtLeast(1)
+        )
+
+        childDao.upsert(updated)
+        ChildrenSyncScheduler.enqueuePushNow(appContext)
+        return updated
+    }
+
+    override suspend fun clearChildProfileImage(
+        childId: String,
+        previousStoragePath: String
+    ): Child {
+        val existing = childDao.getById(childId)
+            ?: error("Cannot clear profile image. Child not found: $childId")
+
+        if (previousStoragePath.isNotBlank()) {
+            try {
+                onlineRepo.deleteChildProfileImage(previousStoragePath)
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to delete old child profile image: $previousStoragePath")
+            }
+        }
+
+        val now = Timestamp.now()
+
+        val updated = existing.copy(
+            profileImg = "",
+            profileImageStoragePath = "",
+            profileImageLocalPath = "",
+            profileImageUpdatedAt = now,
+            updatedAt = now,
+            isDirty = true,
+            version = (existing.version + 1).coerceAtLeast(1)
+        )
+
+        childDao.upsert(updated)
+        ChildrenSyncScheduler.enqueuePushNow(appContext)
+        return updated
+    }
 
     override fun observeChild(id: String) =
         childDao.observeById(id)

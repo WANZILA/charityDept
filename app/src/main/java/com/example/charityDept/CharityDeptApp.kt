@@ -53,9 +53,9 @@ class CharityDeptApp : Application(), Configuration.Provider {
 
 
         // ✅ Seed scheduler (idempotent via unique work)
-        EventsSeedScheduler.enqueue(this)
-        AttendencesSeedScheduler.enqueue(this)
-        ChildrenSeedScheduler.enqueue(this)
+//        EventsSeedScheduler.enqueue(this)
+//        AttendencesSeedScheduler.enqueue(this)
+//        ChildrenSeedScheduler.enqueue(this)
 
 //        AssessmentTaxonomySeedScheduler.enqueue(this)
 

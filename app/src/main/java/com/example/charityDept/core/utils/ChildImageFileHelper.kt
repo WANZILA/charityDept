@@ -16,30 +16,30 @@ object ChildImageFileHelper {
         val absolutePath: String
     )
 
-    fun createClientProfileCropDestination(
+    fun createChildProfileCropDestination(
         context: Context,
-        clientId: String
+        childId: String
     ): Uri {
         val dir = File(context.filesDir, "images").apply { mkdirs() }
-        val dest = File(dir, "client_${clientId}_profile.jpg")
+        val dest = File(dir, "child_${childId}_profile.jpg")
         if (dest.exists()) dest.delete()
         return Uri.fromFile(dest)
     }
 
-    fun getClientProfileFile(
+    fun getChildProfileFile(
         context: Context,
-        clientId: String
+        childId: String
     ): File {
         val dir = File(context.filesDir, "images").apply { mkdirs() }
-        return File(dir, "client_${clientId}_profile.jpg")
+        return File(dir, "child_${childId}_profile.jpg")
     }
 
     fun createCameraTempTarget(
         context: Context,
-        clientId: String
+        childId: String
     ): CameraCaptureTarget {
         val dir = File(context.cacheDir, "images").apply { mkdirs() }
-        val file = File(dir, "client_${clientId}_camera_temp.jpg")
+        val file = File(dir, "child_${childId}_camera_temp.jpg")
         if (file.exists()) file.delete()
 
         val uri = FileProvider.getUriForFile(
@@ -53,6 +53,57 @@ object ChildImageFileHelper {
             absolutePath = file.absolutePath
         )
     }
+
+    fun getChildProfileStagedFile(
+        context: Context,
+        childId: String
+    ): File {
+        val dir = File(context.filesDir, "images").apply { mkdirs() }
+        return File(dir, "child_${childId}_profile_staged.jpg")
+    }
+
+    fun copyUriToChildProfileStagedFile(
+        context: Context,
+        sourceUri: Uri,
+        childId: String
+    ): String {
+        val dest = getChildProfileStagedFile(context, childId)
+        context.contentResolver.openInputStream(sourceUri).use { input ->
+            requireNotNull(input) { "Unable to open cropped image input stream" }
+            dest.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        return dest.absolutePath
+    }
+
+    fun deleteChildProfileStagedFile(
+        context: Context,
+        childId: String
+    ) {
+        val staged = getChildProfileStagedFile(context, childId)
+        if (staged.exists()) staged.delete()
+    }
+
+    fun promoteChildProfileStagedFile(
+        context: Context,
+        childId: String
+    ): String? {
+        val staged = getChildProfileStagedFile(context, childId)
+        if (!staged.exists()) return null
+
+        val real = getChildProfileFile(context, childId)
+
+        staged.inputStream().use { input ->
+            real.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+
+        staged.delete()
+        return real.absolutePath
+    }
+
 
     fun getClientProfileStagedFile(
         context: Context,
@@ -85,36 +136,17 @@ object ChildImageFileHelper {
         if (staged.exists()) staged.delete()
     }
 
-    fun promoteClientProfileStagedFile(
-        context: Context,
-        clientId: String
-    ): String? {
-        val staged = getClientProfileStagedFile(context, clientId)
-        if (!staged.exists()) return null
-
-        val real = getClientProfileFile(context, clientId)
-
-        staged.inputStream().use { input ->
-            real.outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
-
-        staged.delete()
-        return real.absolutePath
-    }
 
 // app/src/main/java/com/example/upliftadmin/core/utils/ClientImageFileHelper.kt
 // /// CHANGED: Save each client profile image with a unique timestamped filename so camera/gallery preview refreshes immediately.
 
-    fun copyUriToClientProfileFile(
+    fun copyUriToChildProfileFile(
         context: Context,
         sourceUri: Uri,
-        clientId: String
+        childId: String
     ): String {
         val dir = File(context.filesDir, "images").apply { mkdirs() }
-//        val dest = File(dir, "client_${clientId}_profile_${System.currentTimeMillis()}.jpg")
-        val dest = File(dir, "client_${clientId}_profile.jpg")
+        val dest = File(dir, "child_${childId}_profile.jpg")
         copyUriToFile(
             resolver = context.contentResolver,
             sourceUri = sourceUri,
@@ -124,18 +156,17 @@ object ChildImageFileHelper {
         return dest.absolutePath
     }
 
-    fun copyCameraTempFileToClientProfileFile(
+    fun copyCameraTempFileToChildProfileFile(
         context: Context,
         tempFilePath: String,
-        clientId: String
+        childId: String
     ): String {
         val tempFile = File(tempFilePath)
         require(tempFile.exists()) { "Captured image file not found" }
         require(tempFile.length() > 0L) { "Captured image file is empty" }
 
         val dir = File(context.filesDir, "images").apply { mkdirs() }
-//        val dest = File(dir, "client_${clientId}_profile_${System.currentTimeMillis()}.jpg")
-        val dest = File(dir, "client_${clientId}_profile.jpg")
+        val dest = File(dir, "child_${childId}_profile.jpg")
         FileInputStream(tempFile).use { input ->
             FileOutputStream(dest, false).use { output ->
                 input.copyTo(output)
@@ -156,5 +187,13 @@ object ChildImageFileHelper {
                 output.flush()
             }
         } ?: throw IllegalStateException("Unable to open selected image")
+    }
+
+    fun deleteChildProfileFile(
+        context: Context,
+        childId: String
+    ) {
+        val real = getChildProfileFile(context, childId)
+        if (real.exists()) real.delete()
     }
 }

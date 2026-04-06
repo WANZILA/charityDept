@@ -42,6 +42,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.util.Date
+import android.net.Uri
+import com.google.firebase.storage.FirebaseStorage
+import java.io.File
+
+data class ChildProfileImageUploadResult(
+    val downloadUrl: String,
+    val storagePath: String
+)
 
 data class ChildrenSnapshot(
     val children: List<Child>,
@@ -51,6 +59,17 @@ data class ChildrenSnapshot(
 
 interface ChildrenRepository {
     suspend fun getChildFast(id: String): Child?
+
+    suspend fun uploadChildProfileImage(
+        childId: String,
+        localPath: String,
+        previousStoragePath: String?
+    ): ChildProfileImageUploadResult
+
+    suspend fun deleteChildProfileImage(
+        storagePath: String
+    )
+
     fun streamChildren(): Flow<List<Child>>
     suspend fun upsert(child: Child, isNew: Boolean): String
     suspend fun getAll(): List<Child>
@@ -66,32 +85,7 @@ interface ChildrenRepository {
 
     suspend fun getByEducationPreference(pref: EducationPreference): List<Child>
 
-    //for Room
-//    fun pagingChildren(): Flow<
-//            androidx.paging.PagingData<com.example.charityDept.data.local.projection.ChildRow>
-//            >
-    /// ADDED — allow callers (VM/UI) to trigger a DeltaIn run explicitly.
-//    suspend fun triggerDeltaInNow(pageSize: Int = 200, maxPages: Int = 50)
 
-    /// ADDED — verify parity (logs metrics)
-//    suspend fun verifyParityNow()
-
-//    suspend fun peekLocalCount(): Int
-//suspend fun triggerDeltaInNow()
-//    suspend fun peekLocalCount(): Int
-
-    /// ADDED
-//    fun pagingChildren(): Flow<PagingData<ChildRow>>
-//
-    /// ADDED
-//    fun triggerDeltaInNow()
-
-    /// ADDED — Flow for Paging 3 (already present in your last paste; keep if you have it)
-//    fun pagingChildren(): Flow<PagingData<ChildRow>>
-
-    /// ADDED — fire-and-forget: run a simple delta-in pull on a background thread
-//    fun triggerSimpleDeltaIn()
-//
 }
 
 @Singleton
@@ -105,6 +99,8 @@ class ChildrenRepositoryImpl @Inject constructor(
 //    private val childDao: ChildDao,
 //    private val deltaInEnqueuer: ChildrenDeltaInEnqueuer
 ) : ChildrenRepository {
+
+    private val storage = FirebaseStorage.getInstance()
 
     private fun Query.toChildrenSnapshotFlow(): Flow<ChildrenSnapshot> = callbackFlow {
         val reg = this@toChildrenSnapshotFlow.addSnapshotListener { snap, err ->
@@ -128,6 +124,43 @@ class ChildrenRepositoryImpl @Inject constructor(
 
     override suspend fun getAll(): List<Child> =
         childrenRef.get().await().toChildren()
+
+    override suspend fun uploadChildProfileImage(
+        childId: String,
+        localPath: String,
+        previousStoragePath: String?
+    ): ChildProfileImageUploadResult {
+        val file = File(localPath)
+        require(file.exists()) { "Local profile image file does not exist" }
+
+        val timestamp = System.currentTimeMillis()
+        val storagePath = "children/$childId/profile/profile_$timestamp.jpg"
+        val storageRef = storage.reference.child(storagePath)
+
+        storageRef.putFile(Uri.fromFile(file)).await()
+        val downloadUrl = storageRef.downloadUrl.await().toString()
+
+        if (!previousStoragePath.isNullOrBlank() && previousStoragePath != storagePath) {
+            try {
+                storage.reference.child(previousStoragePath).delete().await()
+                Timber.d("Deleted old child profile image: $previousStoragePath")
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to delete old child profile image: $previousStoragePath")
+            }
+        }
+
+        return ChildProfileImageUploadResult(
+            downloadUrl = downloadUrl,
+            storagePath = storagePath
+        )
+    }
+
+    override suspend fun deleteChildProfileImage(
+        storagePath: String
+    ) {
+        if (storagePath.isBlank()) return
+        storage.reference.child(storagePath).delete().await()
+    }
 
     override fun streamChildren(): Flow<List<Child>> = callbackFlow {
         val q = childrenRef

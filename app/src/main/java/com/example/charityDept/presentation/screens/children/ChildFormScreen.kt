@@ -56,6 +56,7 @@ import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import java.io.File
+import androidx.compose.foundation.BorderStroke
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -165,10 +166,8 @@ fun ChildFormScreen(
             if (granted) {
                 runCatching {
                     val childId = ensureChildId()
-                    val target = ChildImageFileHelper.createCameraTempTarget(
-                        context = context,
-                        childId = childId
-                    )
+
+                    val target = ChildImageFileHelper.createCameraTempTarget(context, childId)
                     pendingCameraUri = target.uri
                     pendingCameraTempPath = target.absolutePath
                     takePictureLauncher.launch(target.uri)
@@ -379,6 +378,74 @@ private fun StepHeader(
     }
 }
 
+
+@Composable
+private fun ChildProfileImageBlock(
+    uiState: ChildFormUiState,
+    onOpenGallery: () -> Unit,
+    onOpenCamera: () -> Unit,
+    onClearPhoto: () -> Unit
+) {
+    val imageModel = when {
+        uiState.profileImageStagedLocalPath.isNotBlank() -> File(uiState.profileImageStagedLocalPath)
+        uiState.profileImageLocalPath.isNotBlank() -> File(uiState.profileImageLocalPath)
+        uiState.profileImg.isNotBlank() -> uiState.profileImg
+        else -> null
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (imageModel != null) {
+            AsyncImage(
+                model = imageModel,
+                contentDescription = "Child profile photo",
+                modifier = Modifier
+                    .size(112.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .size(112.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Outlined.Person,
+                    contentDescription = "No child photo",
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedButton(onClick = onOpenGallery) {
+                Text("Gallery")
+            }
+
+            OutlinedButton(onClick = onOpenCamera) {
+                Text("Camera")
+            }
+
+            OutlinedButton(
+                onClick = onClearPhoto,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+            ) {
+                Text("Remove")
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StepBasicInfo(
@@ -400,6 +467,13 @@ private fun StepBasicInfo(
         val streetDisplay = vm.ui.street.trim().ifBlank { "Tap to choose Street" }
         var showStreetDialog by remember { mutableStateOf(false) }
 
+
+        ChildProfileImageBlock(
+            uiState = uiState,
+            onOpenGallery = onOpenGallery,
+            onOpenCamera = onOpenCamera,
+            onClearPhoto = vm::clearProfilePhoto
+        )
 
         AppTextField(
             value = uiState.fName,

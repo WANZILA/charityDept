@@ -630,6 +630,7 @@ class ChildFormViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     fun save() = viewModelScope.launch {
         ui = ui.copy(saving = true, error = null)
+//        val id = ui.childId
 
         if (!validateStep(RegistrationStatus.BASICINFOR)) {
             ui = ui.copy(saving = false)
@@ -640,12 +641,15 @@ class ChildFormViewModel @Inject constructor(
         if (ui.isNew && ui.childId.isBlank()) ensureNewIdIfNeeded()
         val now = Timestamp.now()
         val id = ui.childId
+        val previousStoragePath =
+            if (ui.isNew) ""
+            else repo.getChildFast(id)?.profileImageStoragePath.orEmpty()
 
         val stagedPath = ui.profileImageStagedLocalPath
         if (stagedPath.isNotBlank()) {
 //            val promotedPath = ChildImageFileHelper.promoteChildProfileStagedFile(appContext, id)
             val promotedPath = ChildImageFileHelper
-                .promoteClientProfileStagedFile(appContext, id)
+                .promoteChildProfileStagedFile(appContext, id)
 
             if (!promotedPath.isNullOrBlank()) {
                 ui = ui.copy(
@@ -657,15 +661,58 @@ class ChildFormViewModel @Inject constructor(
         }
 
         val child = buildChild(id = id, now = now, status = ui.registrationStatus)
-        runCatching { repo.upsert(child, isNew = ui.isNew) }
-            .onSuccess {
-                ui = ui.copy(saving = false, childId = id, isNew = false)
-                _events.trySend(ChildFormEvent.Saved(id))
+
+        runCatching {
+            repo.upsert(child, isNew = ui.isNew)
+        }.onSuccess {
+            runCatching {
+                if (ui.profileImageLocalPath.isNotBlank()) {
+                    val updatedChild = repo.syncChildProfileImage(id)
+                    ui = ui.copy(
+                        profileImg = updatedChild.profileImg,
+                        profileImageStoragePath = updatedChild.profileImageStoragePath,
+                        profileImageLocalPath = updatedChild.profileImageLocalPath,
+                        profileImageUpdatedAt = updatedChild.profileImageUpdatedAt,
+                        updatedAt = updatedChild.updatedAt,
+                        version = updatedChild.version
+                    )
+                } else if (
+                    previousStoragePath.isNotBlank() &&
+                    ui.profileImg.isBlank() &&
+                    ui.profileImageStoragePath.isBlank()
+                ) {
+                    val updatedChild = repo.clearChildProfileImage(
+                        childId = id,
+                        previousStoragePath = previousStoragePath
+                    )
+                    ui = ui.copy(
+                        profileImg = updatedChild.profileImg,
+                        profileImageStoragePath = updatedChild.profileImageStoragePath,
+                        profileImageLocalPath = updatedChild.profileImageLocalPath,
+                        profileImageUpdatedAt = updatedChild.profileImageUpdatedAt,
+                        updatedAt = updatedChild.updatedAt,
+                        version = updatedChild.version
+                    )
+                }
             }
-            .onFailure {
-                ui = ui.copy(saving = false, error = it.message ?: "Failed to save")
-                _events.trySend(ChildFormEvent.Error("Failed to save"))
-            }
+
+            ui = ui.copy(
+                saving = false,
+                childId = id,
+                isNew = false
+            )
+            _events.trySend(ChildFormEvent.Saved(id))
+        }.onFailure { e ->
+            ui = ui.copy(
+                saving = false,
+                childId = id,
+                isNew = false
+            )
+            _events.trySend(ChildFormEvent.Saved(id))
+        }.onFailure { e ->
+            ui = ui.copy(saving = false)
+            _events.trySend(ChildFormEvent.Error(e.message ?: "Failed to save child"))
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -682,13 +729,14 @@ class ChildFormViewModel @Inject constructor(
     fun clearProfilePhoto() {
         if (ui.childId.isNotBlank()) {
             ChildImageFileHelper.deleteChildProfileStagedFile(appContext, ui.childId)
+            ChildImageFileHelper.deleteChildProfileFile(appContext, ui.childId)
         }
         ui = ui.copy(
             profileImg = "",
             profileImageStoragePath = "",
             profileImageLocalPath = "",
             profileImageStagedLocalPath = "",
-            profileImageUpdatedAt = null
+            profileImageUpdatedAt = Timestamp.now()
         )
     }
 
@@ -850,6 +898,7 @@ class ChildFormViewModel @Inject constructor(
             partnerNotes = ui.sponsorNotes,
 
             registrationStatus = status,
+           version = ui.version,
             graduated = ui.graduated,
             createdAt = ui.createdAt ?: now,
             updatedAt = now
@@ -993,7 +1042,8 @@ class ChildFormViewModel @Inject constructor(
 
         graduated = c.graduated,
         registrationStatus = c.registrationStatus,
-        createdAt = c.createdAt
+        createdAt = c.createdAt,
+        version = c.version
     )
 }
 
@@ -1153,6 +1203,7 @@ data class ChildFormUiState(
     val sponsorNotes: String = "",
 
     val createdAt: Timestamp? = null,
-    val updatedAt: Timestamp? = null
+    val updatedAt: Timestamp? = null,
+    val version: Long = 0
 )
 
