@@ -16,15 +16,7 @@ object ChildImageFileHelper {
         val absolutePath: String
     )
 
-    fun createChildProfileCropDestination(
-        context: Context,
-        childId: String
-    ): Uri {
-        val dir = File(context.filesDir, "images").apply { mkdirs() }
-        val dest = File(dir, "child_${childId}_profile.jpg")
-        if (dest.exists()) dest.delete()
-        return Uri.fromFile(dest)
-    }
+
 
     fun getChildProfileFile(
         context: Context,
@@ -105,77 +97,6 @@ object ChildImageFileHelper {
     }
 
 
-    fun getClientProfileStagedFile(
-        context: Context,
-        clientId: String
-    ): File {
-        val dir = File(context.filesDir, "images").apply { mkdirs() }
-        return File(dir, "client_${clientId}_profile_staged.jpg")
-    }
-
-    fun copyUriToClientProfileStagedFile(
-        context: Context,
-        sourceUri: Uri,
-        clientId: String
-    ): String {
-        val dest = getClientProfileStagedFile(context, clientId)
-        context.contentResolver.openInputStream(sourceUri).use { input ->
-            requireNotNull(input) { "Unable to open cropped image input stream" }
-            dest.outputStream().use { output ->
-                input.copyTo(output)
-            }
-        }
-        return dest.absolutePath
-    }
-
-    fun deleteClientProfileStagedFile(
-        context: Context,
-        clientId: String
-    ) {
-        val staged = getClientProfileStagedFile(context, clientId)
-        if (staged.exists()) staged.delete()
-    }
-
-
-// app/src/main/java/com/example/upliftadmin/core/utils/ClientImageFileHelper.kt
-// /// CHANGED: Save each client profile image with a unique timestamped filename so camera/gallery preview refreshes immediately.
-
-    fun copyUriToChildProfileFile(
-        context: Context,
-        sourceUri: Uri,
-        childId: String
-    ): String {
-        val dir = File(context.filesDir, "images").apply { mkdirs() }
-        val dest = File(dir, "child_${childId}_profile.jpg")
-        copyUriToFile(
-            resolver = context.contentResolver,
-            sourceUri = sourceUri,
-            destFile = dest
-        )
-
-        return dest.absolutePath
-    }
-
-    fun copyCameraTempFileToChildProfileFile(
-        context: Context,
-        tempFilePath: String,
-        childId: String
-    ): String {
-        val tempFile = File(tempFilePath)
-        require(tempFile.exists()) { "Captured image file not found" }
-        require(tempFile.length() > 0L) { "Captured image file is empty" }
-
-        val dir = File(context.filesDir, "images").apply { mkdirs() }
-        val dest = File(dir, "child_${childId}_profile.jpg")
-        FileInputStream(tempFile).use { input ->
-            FileOutputStream(dest, false).use { output ->
-                input.copyTo(output)
-                output.flush()
-            }
-        }
-
-        return dest.absolutePath
-    }
     private fun copyUriToFile(
         resolver: ContentResolver,
         sourceUri: Uri,

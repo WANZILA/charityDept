@@ -57,6 +57,9 @@ import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import java.io.File
 import androidx.compose.foundation.BorderStroke
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
@@ -141,6 +144,15 @@ fun ChildFormScreen(
         }
     }
 
+    fun hasInternet(): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork ?: return false
+        val capabilities = cm.getNetworkCapabilities(network) ?: return false
+
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+                capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+
     val galleryLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
             if (uri != null) {
@@ -180,12 +192,22 @@ fun ChildFormScreen(
         }
 
     fun openGallery() {
+        if (!hasInternet()) {
+            vm.onError("Internet connection is required to add a profile photo")
+            return
+        }
+
         galleryLauncher.launch(
             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         )
     }
 
     fun openCamera() {
+        if (!hasInternet()) {
+            vm.onError("Internet connection is required to add a profile photo")
+            return
+        }
+
         val granted = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.CAMERA
@@ -690,7 +712,8 @@ private fun StepBackground(uiState: ChildFormUiState, vm: ChildFormViewModel) {
 }
 
 @Composable
-private fun StepEducation(uiState: ChildFormUiState, vm: ChildFormViewModel) {
+private fun StepEducation(uiState: ChildFormUiState, vm: ChildFormViewModel)
+{
     val scroll = rememberScrollState()
     val skillsDisplay = vm.ui.technicalSkills.trim().ifBlank { "Tap to choose skill" }
     var showTechSkillDialog by remember { mutableStateOf(false) }

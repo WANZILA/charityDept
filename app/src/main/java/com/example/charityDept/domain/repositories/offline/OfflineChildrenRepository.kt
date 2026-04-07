@@ -36,7 +36,11 @@ import timber.log.Timber
 
 interface OfflineChildrenRepository {
     suspend fun getChildFast(id: String): Child?
-    suspend fun syncChildProfileImage(childId: String): Child
+//    suspend fun syncChildProfileImage(childId: String): Child
+suspend fun syncChildProfileImage(
+    childId: String,
+    previousStoragePath: String = ""
+): Child
     suspend fun clearChildProfileImage(
         childId: String,
         previousStoragePath: String
@@ -90,7 +94,10 @@ class OfflineChildrenRepositoryImpl @Inject constructor(
     override suspend fun getChildFast(id: String): Child? =
         childDao.getById(id)
 
-    override suspend fun syncChildProfileImage(childId: String): Child {
+    override suspend fun syncChildProfileImage(
+        childId: String,
+        previousStoragePath: String
+    ): Child {
         val existing = childDao.getById(childId)
             ?: error("Cannot sync profile image. Child not found: $childId")
 
@@ -98,11 +105,14 @@ class OfflineChildrenRepositoryImpl @Inject constructor(
             return existing
         }
 
+        val oldStoragePath =
+            previousStoragePath.ifBlank { existing.profileImageStoragePath }
+
         val now = Timestamp.now()
         val upload = onlineRepo.uploadChildProfileImage(
             childId = childId,
             localPath = existing.profileImageLocalPath,
-            previousStoragePath = existing.profileImageStoragePath
+            previousStoragePath = oldStoragePath
         )
 
         val updated = existing.copy(

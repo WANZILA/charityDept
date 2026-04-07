@@ -32,6 +32,7 @@ import java.util.Calendar
 import java.util.TimeZone
 import javax.inject.Inject
 import com.example.charityDept.core.utils.ChildImageFileHelper
+import kotlin.lazy
 
 private const val MAX_AGE = 25
 
@@ -88,76 +89,92 @@ class ChildFormViewModel @Inject constructor(
             )
         }
 
-        val regionPicker = PickerFeature(
-            scope = scope,
-            optionsFlow = repo.watchRegions().map { list ->
-                list.map { PickerOption(id = it.regionCode, name = it.regionName) }
-            }
-        )
+        val regionPicker by lazy {
+              PickerFeature(
+                scope = scope,
+                optionsFlow = repo.watchRegions().map { list ->
+                    list.map { PickerOption(id = it.regionCode, name = it.regionName) }
+                }
+            )
+        }
 
-        val districtPicker = PickerFeature(
-            scope = scope,
-            optionsFlow = selectedRegionCode.flatMapLatest { rc ->
-                if (rc.isNullOrBlank()) flowOf(emptyList())
-                else repo.watchDistricts(rc).map { list ->
+        val districtPicker by lazy {
+            PickerFeature(
+                scope = scope,
+                optionsFlow = selectedRegionCode.flatMapLatest { rc ->
+                    if (rc.isNullOrBlank()) flowOf(emptyList())
+                    else repo.watchDistricts(rc).map { list ->
+                        list.map { PickerOption(id = it.districtCode, name = it.districtName) }
+                    }
+                }
+            )
+        }
+
+        val districtSearchPicker by lazy {
+            PickerFeature(
+                scope = scope,
+                optionsFlow = repo.watchAllDistricts().map { list ->
                     list.map { PickerOption(id = it.districtCode, name = it.districtName) }
                 }
-            }
-        )
+            )
+        }
 
-        val districtSearchPicker = PickerFeature(
-            scope = scope,
-            optionsFlow = repo.watchAllDistricts().map { list ->
-                list.map { PickerOption(id = it.districtCode, name = it.districtName) }
-            }
-        )
-
-        val villageSearchPicker = PickerFeature(
-            scope = scope,
-            optionsFlow = repo.watchAllVillages().map { list ->
-                list.map { PickerOption(id = it.villageCode, name = it.villageName) }
-            }
-        )
-
-        val countyPicker = PickerFeature(
-            scope = scope,
-            optionsFlow = selectedDistrictCode.flatMapLatest { dc ->
-                if (dc.isNullOrBlank()) flowOf(emptyList())
-                else repo.watchCounties(dc).map { list ->
-                    list.map { PickerOption(id = it.countyCode, name = it.countyName) }
-                }
-            }
-        )
-
-        val subCountyPicker = PickerFeature(
-            scope = scope,
-            optionsFlow = selectedCountyCode.flatMapLatest { cc ->
-                if (cc.isNullOrBlank()) flowOf(emptyList())
-                else repo.watchSubcounties(cc).map { list ->
-                    list.map { PickerOption(id = it.subCountyCode, name = it.subCountyName) }
-                }
-            }
-        )
-
-        val parishPicker = PickerFeature(
-            scope = scope,
-            optionsFlow = selectedSubCountyCode.flatMapLatest { sc ->
-                if (sc.isNullOrBlank()) flowOf(emptyList())
-                else repo.watchParishes(sc).map { list ->
-                    list.map { PickerOption(id = it.parishCode, name = it.parishName) }
-                }
-            }
-        )
-
-        val villagePicker = PickerFeature(
-            scope = scope,
-            optionsFlow = selectedParishCode.flatMapLatest { pc ->
-                if (pc.isNullOrBlank()) flowOf(emptyList())
-                else repo.watchVillages(pc).map { list ->
+        val villageSearchPicker by lazy {
+            PickerFeature(
+                scope = scope,
+                optionsFlow = repo.watchAllVillages().map { list ->
                     list.map { PickerOption(id = it.villageCode, name = it.villageName) }
                 }
-            }
-        )
+            )
+        }
+
+        val countyPicker by lazy {
+            PickerFeature(
+                scope = scope,
+                optionsFlow = selectedDistrictCode.flatMapLatest { dc ->
+                    if (dc.isNullOrBlank()) flowOf(emptyList())
+                    else repo.watchCounties(dc).map { list ->
+                        list.map { PickerOption(id = it.countyCode, name = it.countyName) }
+                    }
+                }
+            )
+        }
+
+        val subCountyPicker by lazy {
+            PickerFeature(
+                scope = scope,
+                optionsFlow = selectedCountyCode.flatMapLatest { cc ->
+                    if (cc.isNullOrBlank()) flowOf(emptyList())
+                    else repo.watchSubcounties(cc).map { list ->
+                        list.map { PickerOption(id = it.subCountyCode, name = it.subCountyName) }
+                    }
+                }
+            )
+        }
+
+        val parishPicker by lazy {
+            PickerFeature(
+                scope = scope,
+                optionsFlow = selectedSubCountyCode.flatMapLatest { sc ->
+                    if (sc.isNullOrBlank()) flowOf(emptyList())
+                    else repo.watchParishes(sc).map { list ->
+                        list.map { PickerOption(id = it.parishCode, name = it.parishName) }
+                    }
+                }
+            )
+        }
+
+        val villagePicker by lazy {
+            PickerFeature(
+                scope = scope,
+                optionsFlow = selectedParishCode.flatMapLatest { pc ->
+                    if (pc.isNullOrBlank()) flowOf(emptyList())
+                    else repo.watchVillages(pc).map { list ->
+                        list.map { PickerOption(id = it.villageCode, name = it.villageName) }
+                    }
+                }
+            )
+        }
 
         fun onRegionPicked(opt: PickerOption) {
             selectedRegionCode.value = opt.id
@@ -301,82 +318,112 @@ class ChildFormViewModel @Inject constructor(
 
     // ---------------- Uganda pickers (7 instances) ----------------
 
-    val ugResettlementPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
-        ui = ui.copy(region = r, district = d, county = c, subCounty = s, parish = p, village = v)
+    val ugResettlementPicker by lazy {
+        UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+            ui = ui.copy(region = r, district = d, county = c, subCounty = s, parish = p, village = v)
+        }
     }
 
-    val ugM1AncestralPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
-        ui = ui.copy(
-            member1AncestralRegion = r,
-            member1AncestralDistrict = d,
-            member1AncestralCounty = c,
-            member1AncestralSubCounty = s,
-            member1AncestralParish = p,
-            member1AncestralVillage = v
-        )
+    val ugM1AncestralPicker by lazy {
+        UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+            ui = ui.copy(
+                member1AncestralRegion = r,
+                member1AncestralDistrict = d,
+                member1AncestralCounty = c,
+                member1AncestralSubCounty = s,
+                member1AncestralParish = p,
+                member1AncestralVillage = v
+            )
+        }
     }
 
-    val ugM1RentalPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
-        ui = ui.copy(
-            member1RentalRegion = r,
-            member1RentalDistrict = d,
-            member1RentalCounty = c,
-            member1RentalSubCounty = s,
-            member1RentalParish = p,
-            member1RentalVillage = v
-        )
+    val ugM1RentalPicker by lazy {
+        UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+            ui = ui.copy(
+                member1RentalRegion = r,
+                member1RentalDistrict = d,
+                member1RentalCounty = c,
+                member1RentalSubCounty = s,
+                member1RentalParish = p,
+                member1RentalVillage = v
+            )
+        }
     }
 
-    val ugM2AncestralPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
-        ui = ui.copy(
-            member2AncestralRegion = r,
-            member2AncestralDistrict = d,
-            member2AncestralCounty = c,
-            member2AncestralSubCounty = s,
-            member2AncestralParish = p,
-            member2AncestralVillage = v
-        )
+    val ugM2AncestralPicker  by lazy {
+        UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+            ui = ui.copy(
+                member2AncestralRegion = r,
+                member2AncestralDistrict = d,
+                member2AncestralCounty = c,
+                member2AncestralSubCounty = s,
+                member2AncestralParish = p,
+                member2AncestralVillage = v
+            )
+        }
     }
 
-    val ugM2RentalPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
-        ui = ui.copy(
-            member2RentalRegion = r,
-            member2RentalDistrict = d,
-            member2RentalCounty = c,
-            member2RentalSubCounty = s,
-            member2RentalParish = p,
-            member2RentalVillage = v
-        )
+    val ugM2RentalPicker  by lazy {
+        UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+            ui = ui.copy(
+                member2RentalRegion = r,
+                member2RentalDistrict = d,
+                member2RentalCounty = c,
+                member2RentalSubCounty = s,
+                member2RentalParish = p,
+                member2RentalVillage = v
+            )
+        }
     }
 
-    val ugM3AncestralPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
-        ui = ui.copy(
-            member3AncestralRegion = r,
-            member3AncestralDistrict = d,
-            member3AncestralCounty = c,
-            member3AncestralSubCounty = s,
-            member3AncestralParish = p,
-            member3AncestralVillage = v
-        )
+    val ugM3AncestralPicker by lazy {
+        UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+            ui = ui.copy(
+                member3AncestralRegion = r,
+                member3AncestralDistrict = d,
+                member3AncestralCounty = c,
+                member3AncestralSubCounty = s,
+                member3AncestralParish = p,
+                member3AncestralVillage = v
+            )
+        }
     }
 
-    val ugM3RentalPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
-        ui = ui.copy(
-            member3RentalRegion = r,
-            member3RentalDistrict = d,
-            member3RentalCounty = c,
-            member3RentalSubCounty = s,
-            member3RentalParish = p,
-            member3RentalVillage = v
-        )
+
+    val ugM3RentalPicker by lazy {
+        UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+            ui = ui.copy(
+                member3RentalRegion = r,
+                member3RentalDistrict = d,
+                member3RentalCounty = c,
+                member3RentalSubCounty = s,
+                member3RentalParish = p,
+                member3RentalVillage = v
+            )
+        }
     }
+//    val ugM3RentalPicker = UgandaAddressPicker(viewModelScope, ugRepo) { r, d, c, s, p, v ->
+//        ui = ui.copy(
+//            member3RentalRegion = r,
+//            member3RentalDistrict = d,
+//            member3RentalCounty = c,
+//            member3RentalSubCounty = s,
+//            member3RentalParish = p,
+//            member3RentalVillage = v
+//        )
+//    }
 
     // ---------------- Other pickers ----------------
-
-    val streetPicker = PickerFeature(
-        scope = viewModelScope,
-        optionsFlow = streetRepo.streetsPickerWatchAll()
-    )
+    val streetPicker by lazy {
+        PickerFeature(
+            scope = viewModelScope,
+            optionsFlow = streetRepo.streetsPickerWatchAll()
+        )
+    }
+//    val streetPicker = PickerFeature(
+//        scope = viewModelScope,
+//        optionsFlow = streetRepo.streetsPickerWatchAll()
+//    )
 
     fun onStreetPicked(opt: PickerOption) {
         // update your form state with client id/name/img
@@ -387,10 +434,17 @@ class ChildFormViewModel @Inject constructor(
         streetPicker.clearQuery()
     }
 
-    val technicalSkillsPicker = PickerFeature(
-        scope = viewModelScope,
-        optionsFlow = techRepo.techSkillsPickerWatchAll()
-    )
+    val technicalSkillsPicker by lazy {
+        PickerFeature(
+            scope = viewModelScope,
+            optionsFlow = techRepo.techSkillsPickerWatchAll()
+        )
+    }
+
+//    val technicalSkillsPicker = PickerFeature(
+//        scope = viewModelScope,
+//        optionsFlow = techRepo.techSkillsPickerWatchAll()
+//    )
 
     fun onTechnicalSkillsPicked(opt: PickerOption) {
         ui = ui.copy(technicalSkills = opt.name)
@@ -667,7 +721,10 @@ class ChildFormViewModel @Inject constructor(
         }.onSuccess {
             runCatching {
                 if (ui.profileImageLocalPath.isNotBlank()) {
-                    val updatedChild = repo.syncChildProfileImage(id)
+                    val updatedChild = repo.syncChildProfileImage(
+                        childId = id,
+                        previousStoragePath = previousStoragePath
+                    )
                     ui = ui.copy(
                         profileImg = updatedChild.profileImg,
                         profileImageStoragePath = updatedChild.profileImageStoragePath,

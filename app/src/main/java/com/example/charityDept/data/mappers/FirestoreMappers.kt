@@ -406,7 +406,7 @@ fun Child.toFirestoreMapPatch(): Map<String, Any> = buildMap {
     // ===== Basic Info =====
     put("profileImg", profileImg)
     put("profileImageStoragePath", profileImageStoragePath)
-    put("profileImageLocalPath", profileImageLocalPath)
+//    put("profileImageLocalPath", profileImageLocalPath)
     putIfNotNull("profileImageUpdatedAt", profileImageUpdatedAt)
     putIfNotBlank("fName", fName)
     putIfNotBlank("lName", lName)

@@ -133,14 +133,16 @@ class ChildrenRepositoryImpl @Inject constructor(
         val file = File(localPath)
         require(file.exists()) { "Local profile image file does not exist" }
 
-        val timestamp = System.currentTimeMillis()
-        val storagePath = "children/$childId/profile/profile_$timestamp.jpg"
+        val storagePath = "children/$childId/profile/profile_$childId.jpg"
         val storageRef = storage.reference.child(storagePath)
 
         storageRef.putFile(Uri.fromFile(file)).await()
         val downloadUrl = storageRef.downloadUrl.await().toString()
 
-        if (!previousStoragePath.isNullOrBlank() && previousStoragePath != storagePath) {
+        if (
+            !previousStoragePath.isNullOrBlank() &&
+            previousStoragePath != storagePath
+        ) {
             try {
                 storage.reference.child(previousStoragePath).delete().await()
                 Timber.d("Deleted old child profile image: $previousStoragePath")
@@ -154,6 +156,37 @@ class ChildrenRepositoryImpl @Inject constructor(
             storagePath = storagePath
         )
     }
+//    override suspend fun uploadChildProfileImage(
+//        childId: String,
+//        localPath: String,
+//        previousStoragePath: String?
+//    ): ChildProfileImageUploadResult {
+//        val file = File(localPath)
+//        require(file.exists()) { "Local profile image file does not exist" }
+//
+//        val timestamp = System.currentTimeMillis()
+////        val storagePath = "children/$childId/profile/profile_$timestamp.jpg"
+//        val storagePath = "children/$childId/profile/profile_$childId.jpg"
+//
+//        val storageRef = storage.reference.child(storagePath)
+//
+//        storageRef.putFile(Uri.fromFile(file)).await()
+//        val downloadUrl = storageRef.downloadUrl.await().toString()
+//
+//        if (!previousStoragePath.isNullOrBlank() && previousStoragePath != storagePath) {
+//            try {
+//                storage.reference.child(previousStoragePath).delete().await()
+//                Timber.d("Deleted old child profile image: $previousStoragePath")
+//            } catch (e: Exception) {
+//                Timber.w(e, "Failed to delete old child profile image: $previousStoragePath")
+//            }
+//        }
+//
+//        return ChildProfileImageUploadResult(
+//            downloadUrl = downloadUrl,
+//            storagePath = storagePath
+//        )
+//    }
 
     override suspend fun deleteChildProfileImage(
         storagePath: String
