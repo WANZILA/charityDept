@@ -163,7 +163,7 @@ private fun DashboardContent(
         }
         item {
             Text(
-                text = "Attendance Summary (This Event Only)",
+                text = "Attendance Summary",
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -173,73 +173,46 @@ private fun DashboardContent(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                DashboardCardLike(
-                    title = "Eligible",
-                    value = attendanceSummary.totalEligible.toString(),
-                    modifier = Modifier.weight(1f),
-                    enabled = false
-                ) {}
 
                 DashboardCardLike(
-                    title = "Present",
+                    title = "Present and i want hte percantage to e.g 5 present 6%",
                     value = attendanceSummary.presentEligible.toString(),
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
-            }
-        }
-
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
                 DashboardCardLike(
-                    title = "Absent",
+                    title = "Absent and i want hte percantage to e.g 5 absent 6%\"",
                     value = (attendanceSummary.totalEligible - attendanceSummary.presentEligible)
                         .coerceAtLeast(0)
                         .toString(),
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
+            }
+        }
 
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                DashboardCardLike(
+                    title = "total of children ",
+                    value = "",
+                    modifier = Modifier.weight(1f),
+                    enabled = false
+                ) {}
                 DashboardCardLike(
                     title = "Scope",
                     value = "This event only",
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
+
+
             }
         }
 
-        item {
-            Text(
-                text = if (event.isChild) {
-                    "Frequent Attendees (This Event)"
-                } else {
-                    "Frequent Attendees (Parent + Children)"
-                },
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
-
-        if (frequentAttendees.isEmpty()) {
-            item {
-                Text(
-                    text = "No frequent attendees yet.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        } else {
-        items(frequentAttendees.take(10), key = { it.childId }) { row ->
-            FrequentAttendeeRow(
-                row = row,
-                onClick = { onOpenFrequentAttendee(row.childId) }
-            )
-
-    }
-        }
         item {
             Text(
                 text = "${event.eventDate.asDateOnly()} • ${event.eventStatus.name}",
@@ -321,6 +294,7 @@ private fun DashboardContent(
             }
         }
 
+
         item {
             Text(
                 text = "Child Events",
@@ -342,6 +316,35 @@ private fun DashboardContent(
                     event = child,
                     onClick = { onOpenChildEvent(child.eventId) }
                 )
+            }
+        }
+
+        item {
+            Text(
+                text = if (event.isChild) {
+                    "Frequent Attendees (This Event)"
+                } else {
+                    "Frequent Attendees (Parent + Children)"
+                },
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+
+        if (frequentAttendees.isEmpty()) {
+            item {
+                Text(
+                    text = "No frequent attendees yet.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else {
+            items(frequentAttendees.take(10), key = { it.childId }) { row ->
+                FrequentAttendeeRow(
+                    row = row,
+                    onClick = { onOpenFrequentAttendee(row.childId) }
+                )
+
             }
         }
     }
