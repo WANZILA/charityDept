@@ -102,7 +102,7 @@ fun ChildrenListScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Not Graduated")
-                        Spacer(Modifier.width(8.dp))
+
 //                        if (ui.activeFilter != null) {
 //                            AssistChip(
 //                                onClick = { /* no-op */ },

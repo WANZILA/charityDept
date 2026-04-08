@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -32,6 +33,7 @@ import com.example.charityDept.presentation.components.common.ProfileImageSectio
 fun ChildDashboardScreen(
     childIdArg: String,
     navigateUp: () -> Unit,
+    toChildrenList: () -> Unit,
     toEditChild: (childId: String) -> Unit,
     toEvents: (childId: String) -> Unit,
     toAttendance: (childId: String) -> Unit,
@@ -52,6 +54,11 @@ fun ChildDashboardScreen(
                 title = { Text("Child Dashboard") },
                 navigationIcon = {
                     IconButton(onClick = navigateUp) {
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                    },
+                actions = {
+                    TextButton(onClick = toChildrenList) {
                         Icon(Icons.Outlined.Close, contentDescription = "Close")
                     }
                 }

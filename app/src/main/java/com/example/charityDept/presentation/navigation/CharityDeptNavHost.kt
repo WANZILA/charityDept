@@ -244,7 +244,7 @@ fun CharityDeptNavHost(
                     composable(Screen.HomeDashboard.route) {
                         HomeDashboardScreen(
                             toChildrenList = {
-                                navController.navigate(Screen.ChildrenList.route) {
+                                navController.navigate(Screen.ChildrenList.all()) {
                                     popUpTo(Screen.HomeDashboard.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
@@ -712,10 +712,10 @@ fun CharityDeptNavHost(
                                 }
                             },
                             toList = {
-//                                navController.navigate(Screen.UserList.route) {
-//                                    popUpTo(Screen.UserDetails.route) { inclusive = true }
-//                                    launchSingleTop = true
-//                                }
+                                navController.navigate(Screen.ChildrenList.all()) {
+                                    popUpTo(Screen.ChildForm.route) { inclusive = true }
+                                    launchSingleTop = true
+                                }
                             },
                         )
                     }
@@ -1137,7 +1137,7 @@ fun CharityDeptNavHost(
                             },
                             toChildDashboard = { childIdArg ->
                                 navController.navigate(Screen.ChildDashboard.view(childIdArg)) {
-                                    popUpTo(Screen.ChildrenList.route) { inclusive = true }
+//                                    popUpTo(Screen.ChildrenList.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
                             },
@@ -1204,16 +1204,22 @@ fun CharityDeptNavHost(
                             },
                             toChildrenDashboard = {
                                 navController.navigate(Screen.ChildDashboard.view(childId)) {
-                                    popUpTo(Screen.ChildDetails.route) { inclusive = true }
+//                                    popUpTo(Screen.ChildDetails.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
                             },
                             toChildrenList = {
-                                navController.navigate(Screen.ChildrenList.route) {
+                                navController.navigate(Screen.ChildrenList.all()) {
                                     popUpTo(Screen.ChildDetails.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
                             },
+//                            toChildrenList = {
+//                                navController.navigate(Screen.ChildrenList.route) {
+//                                    popUpTo(Screen.ChildDetails.route) { inclusive = true }
+//                                    launchSingleTop = true
+//                                }
+//                            },
                         )
                     }
 
@@ -1265,12 +1271,19 @@ fun CharityDeptNavHost(
                             },
 
                             navigateUp = {
+                                navController.navigateUp()
+//                                navController.navigate(Screen.ChildrenList.all()) {
+//                                    popUpTo(Screen.ChildDashboard.route) { inclusive = true }
+//                                    launchSingleTop = true
+//                                }
+
+                            },
+                            toChildrenList = {
                                 navController.navigate(Screen.ChildrenList.all()) {
                                     popUpTo(Screen.ChildDashboard.route) { inclusive = true }
                                     launchSingleTop = true
                                 }
-
-                            },
+                            }
                         )
                     }
 
