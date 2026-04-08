@@ -32,6 +32,7 @@ import java.util.Locale
 // Paging compose imports
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.LazyPagingItems
+import com.example.charityDept.presentation.components.common.ProfileAvatar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -267,6 +268,12 @@ private fun AttendanceRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                ProfileAvatar(
+                    profileImageLocalPath = rosterChild.child.profileImageLocalPath,
+                    profileImg = "",
+//                    profileImg = rosterChild.child.profileImg
+                )
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = rosterChild.child.fName.trim(),
@@ -316,7 +323,6 @@ private fun AttendanceRow(
                     }
                 }
             }
-
             // Read-only note display when Absent (ACTIVE and DONE)
             if (!rosterChild.present) {
                 val note = rosterChild.attendance?.notes.orEmpty().trim()

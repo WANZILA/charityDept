@@ -16,7 +16,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.charityDept.presentation.components.common.ProfileImageSection
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChildDashboardScreen(
@@ -67,16 +77,6 @@ fun ChildDashboardScreen(
                     val cid = state.childId.ifBlank { childIdArg }
 
                     val name = child?.fullName().orEmpty().ifBlank { "Child" }
-
-                    val initials = name
-                        .trim()
-                        .split(" ")
-                        .filter { it.isNotBlank() }
-                        .take(2)
-                        .mapNotNull { it.firstOrNull()?.uppercase() }
-                        .joinToString("")
-                        .ifBlank { "C" }
-
                     val attendanceValue = "${state.attendancePresent}/${state.attendanceTotal}"
 
                     Column(
@@ -86,39 +86,46 @@ fun ChildDashboardScreen(
                             .padding(16.dp)
                     ) {
                         // ─── HEADER ───────────────────────────────
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.secondary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = initials,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.onSecondary
-                                )
-                            }
+//                        Row(
+//                            verticalAlignment = Alignment.CenterVertically,
+//                            modifier = Modifier.fillMaxWidth()
+//                        ) {
+//                            Box(
+//                                modifier = Modifier
+//                                    .size(44.dp)
+//                                    .clip(CircleShape)
+//                                    .background(MaterialTheme.colorScheme.secondary),
+//                                contentAlignment = Alignment.Center
+//                            ) {
+//                                Text(
+//                                    text = initials,
+//                                    style = MaterialTheme.typography.titleLarge,
+//                                    color = MaterialTheme.colorScheme.onSecondary
+//                                )
+//                            }
+                            ProfileImageSection(
+                                profileImageLocalPath = state.child?.profileImageLocalPath.orEmpty(),
+                                profileImg = "",
+//                                profileImg = state.child?.profileImg.orEmpty(),
+                                displayName = name,
+                                showImageSourceText = false,
+                            )
 
-                            Spacer(Modifier.width(12.dp))
+//                            Spacer(Modifier.width(12.dp))
 
-                            Column {
-                                Text(
-                                    text = name,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = cid,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        }
+//                            Column {
+//                                Text(
+//                                    text = name,
+//                                    style = MaterialTheme.typography.titleLarge,
+//                                    fontWeight = FontWeight.SemiBold
+//                                )
+//                                Text(
+//                                    text = cid,
+//                                    style = MaterialTheme.typography.titleSmall,
+//                                    fontWeight = FontWeight.SemiBold
+//                                )
+//                            }
+//                        }
 
                         Spacer(Modifier.height(16.dp))
 

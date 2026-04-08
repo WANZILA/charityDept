@@ -93,10 +93,14 @@ private val _query = MutableStateFlow("")
     }.getOrNull()
 
     private val filterStreet: String? =
-        savedState.get<String>("street")?.takeIf { it.isNotBlank() }?.decodeAndNorm()
+        savedState.get<String>("street")
+            ?.takeIfUsableNavArg()
+            ?.decodeAndNorm()
 
     private val filterRegion: String? =
-        savedState.get<String>("region")?.takeIf { it.isNotBlank() }?.decodeAndNorm()
+        savedState.get<String>("region")
+            ?.takeIfUsableNavArg()
+            ?.decodeAndNorm()
 
     private val filterSponsored: Boolean? =
         savedState.get<String>("sponsored")?.toBoolOrNull()
@@ -239,6 +243,14 @@ private val _query = MutableStateFlow("")
     private fun String.decodeAndNorm(): String = this
         .replace("%20", " ")
         .norm()
+
+    private fun String.takeIfUsableNavArg(): String? {
+        val value = trim()
+        if (value.isBlank()) return null
+        if (value.startsWith("{") && value.endsWith("}")) return null
+        return value
+    }
+
 
     private fun String?.displayCase(): String? =
         this?.split(' ')

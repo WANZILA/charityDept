@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.charityDept.data.model.AttendanceStatus
+import com.example.charityDept.presentation.components.common.ProfileAvatar
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -334,10 +335,16 @@ private fun PresentList(
         items(present) { pc ->
             ElevatedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                 ListItem(
+                    leadingContent = {
+                        ProfileAvatar(
+                            profileImageLocalPath = pc.child.profileImageLocalPath,
+                            profileImg = pc.child.profileImg
+                        )
+                    },
                     headlineContent = {
                         Text(
                             (
-                                 "${pc.child.fName ?: ""} ${pc.child.lName ?: ""}".trim())
+                                    "${pc.child.fName ?: ""} ${pc.child.lName ?: ""}".trim())
                                 .ifEmpty { pc.child.childId },
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -376,10 +383,16 @@ private fun AbsentList(
         items(absent) { s ->
             ElevatedCard(Modifier.fillMaxWidth(), shape = MaterialTheme.shapes.large) {
                 ListItem(
+                    leadingContent = {
+                        ProfileAvatar(
+                            profileImageLocalPath = s.child.profileImageLocalPath,
+                            profileImg = s.child.profileImg
+                        )
+                    },
                     headlineContent = {
                         Text(
                             (
-                                 "${s.child.fName ?: ""} ${s.child.lName ?: ""}".trim())
+                                    "${s.child.fName ?: ""} ${s.child.lName ?: ""}".trim())
                                 .ifEmpty { s.child.childId },
                             style = MaterialTheme.typography.titleMedium
                         )
