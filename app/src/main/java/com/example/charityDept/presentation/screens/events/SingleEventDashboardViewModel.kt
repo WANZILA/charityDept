@@ -15,9 +15,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.charityDept.data.local.projection.EventFrequentAttendeeRow
 import com.example.charityDept.domain.repositories.offline.OfflineAttendanceRepository
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import com.example.charityDept.domain.repositories.offline.EligibleCounts
 
 data class SingleEventDashboardUiState(
@@ -30,6 +27,10 @@ data class SingleEventDashboardUiState(
         presentEligible = 0
     ),
     val frequentAttendees: List<EventFrequentAttendeeRow> = emptyList(),
+    val childEventsLoaded: Boolean = false,
+    val frequentAttendeesLoaded: Boolean = false,
+    val childEventsLoading: Boolean = false,
+    val frequentAttendeesLoading: Boolean = false,
     val error: String? = null
 )
 
@@ -43,72 +44,108 @@ class SingleEventDashboardViewModel @Inject constructor(
     val ui: StateFlow<SingleEventDashboardUiState> = _ui.asStateFlow()
 
     private var observeJob: Job? = null
+    private var childEventsJob: Job? = null
+    private var frequentAttendeesJob: Job? = null
 
     fun load(eventId: String) {
         observeJob?.cancel()
+        childEventsJob?.cancel()
+        frequentAttendeesJob?.cancel()
+
         observeJob = viewModelScope.launch {
             _ui.value = SingleEventDashboardUiState(loading = true)
 
             combine(
                 eventsRepo.observeEventById(eventId),
-                eventsRepo.observeChildrenForParent(eventId),
                 eventsRepo.observeChildCountForParent(eventId)
-            ) { event, children, childCount ->
-                Triple(event, children, childCount)
+            ) { event, childCount ->
+                event to childCount
+            }.collectLatest { (event, childCount) ->
+                if (event == null) {
+                    _ui.value = SingleEventDashboardUiState(
+                        loading = false,
+                        event = null,
+                        childEvents = emptyList(),
+                        childCount = 0,
+                        frequentAttendees = emptyList(),
+                        childEventsLoaded = false,
+                        frequentAttendeesLoaded = false,
+                        childEventsLoading = false,
+                        frequentAttendeesLoading = false,
+                        error = "Event not found"
+                    )
+                } else {
+                    val summary = attendanceRepo.eligibleCountsForEvent(
+                        eventId = event.eventId,
+                        eventDate = event.eventDate
+                    )
+
+                    _ui.value = _ui.value.copy(
+                        loading = false,
+                        event = event,
+                        childCount = childCount,
+                        attendanceSummary = summary,
+                        error = null
+                    )
+                }
             }
-                .flatMapLatest { (event, children, childCount) ->
-                    if (event == null) {
-                        flowOf(
-                            SingleEventDashboardUiState(
-                                loading = false,
-                                event = null,
-                                childEvents = emptyList(),
-                                childCount = 0,
-                                frequentAttendees = emptyList(),
-                                error = "Event not found"
-                            )
-                        )
+        }
+    }
+
+    fun loadChildEvents(eventId: String) {
+        if (_ui.value.childEventsLoaded || _ui.value.childEventsLoading) return
+
+        _ui.value = _ui.value.copy(childEventsLoading = true)
+
+        childEventsJob?.cancel()
+        childEventsJob = viewModelScope.launch {
+            eventsRepo.observeChildrenForParent(eventId)
+                .collectLatest { children ->
+                    _ui.value = _ui.value.copy(
+                        childEvents = children,
+                        childEventsLoaded = true,
+                        childEventsLoading = false
+                    )
+                }
+        }
+    }
+
+    fun loadFrequentAttendees(eventId: String) {
+        if (_ui.value.frequentAttendeesLoaded || _ui.value.frequentAttendeesLoading) return
+
+        _ui.value = _ui.value.copy(frequentAttendeesLoading = true)
+
+        frequentAttendeesJob?.cancel()
+        frequentAttendeesJob = viewModelScope.launch {
+            combine(
+                eventsRepo.observeEventById(eventId),
+                eventsRepo.observeChildrenForParent(eventId)
+            ) { event, children ->
+                event to children
+            }.collectLatest { (event, children) ->
+                if (event == null) {
+                    _ui.value = _ui.value.copy(
+                        frequentAttendees = emptyList(),
+                        frequentAttendeesLoaded = true,
+                        frequentAttendeesLoading = false
+                    )
+                } else {
+                    val scopedEventIds = if (event.isChild) {
+                        listOf(event.eventId)
                     } else {
-                        val scopedEventIds = if (event.isChild) {
-                            listOf(event.eventId)
-                        } else {
-                            listOf(event.eventId) + children.map { it.eventId }
-                        }
-
-                        attendanceRepo.observeFrequentAttendeesForEvents(scopedEventIds)
-                            .map { frequentRows ->
-                                val summary = attendanceRepo.eligibleCountsForEvent(
-                                    eventId = event.eventId,
-                                    eventDate = event.eventDate
-                                )
-
-                                SingleEventDashboardUiState(
-                                    loading = false,
-                                    event = event,
-                                    childEvents = children,
-                                    childCount = childCount,
-                                    attendanceSummary = summary,
-                                    frequentAttendees = frequentRows,
-                                    error = null
-                                )
-                            }
-
-//                        attendanceRepo.observeFrequentAttendeesForEvents(scopedEventIds)
-//                            .map { frequentRows ->
-//                                SingleEventDashboardUiState(
-//                                    loading = false,
-//                                    event = event,
-//                                    childEvents = children,
-//                                    childCount = childCount,
-//                                    frequentAttendees = frequentRows,
-//                                    error = null
-//                                )
-//                            }
+                        listOf(event.eventId) + children.map { it.eventId }
                     }
+
+                    attendanceRepo.observeFrequentAttendeesForEvents(scopedEventIds)
+                        .collectLatest { frequentRows ->
+                            _ui.value = _ui.value.copy(
+                                frequentAttendees = frequentRows,
+                                frequentAttendeesLoaded = true,
+                                frequentAttendeesLoading = false
+                            )
+                        }
                 }
-                .collectLatest { next ->
-                    _ui.value = next
-                }
+            }
         }
     }
 }

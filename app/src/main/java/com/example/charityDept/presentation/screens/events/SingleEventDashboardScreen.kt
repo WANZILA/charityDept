@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowCircleLeft
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -124,6 +125,12 @@ fun SingleEventDashboardScreen(
                     childCount = ui.childCount,
                     attendanceSummary = ui.attendanceSummary,
                     frequentAttendees = ui.frequentAttendees,
+                    childEventsLoaded = ui.childEventsLoaded,
+                    frequentAttendeesLoaded = ui.frequentAttendeesLoaded,
+                    childEventsLoading = ui.childEventsLoading,
+                    frequentAttendeesLoading = ui.frequentAttendeesLoading,
+                    onLoadChildEvents = { vm.loadChildEvents(eventIdArg) },
+                    onLoadFrequentAttendees = { vm.loadFrequentAttendees(eventIdArg) },
                     onEditEvent = onEditEvent,
                     onAddChildEvent = onAddChildEvent,
                     onOpenAttendance = onOpenAttendance,
@@ -143,6 +150,12 @@ private fun DashboardContent(
     childCount: Int,
     attendanceSummary: EligibleCounts,
     frequentAttendees: List<EventFrequentAttendeeRow>,
+    childEventsLoaded: Boolean,
+    frequentAttendeesLoaded: Boolean,
+    childEventsLoading: Boolean,
+    frequentAttendeesLoading: Boolean,
+    onLoadChildEvents: () -> Unit,
+    onLoadFrequentAttendees: () -> Unit,
     onEditEvent: (String) -> Unit,
     onAddChildEvent: (String) -> Unit,
     onOpenAttendance: (String) -> Unit,
@@ -150,6 +163,24 @@ private fun DashboardContent(
     onOpenFrequentAttendee: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val totalEligible = attendanceSummary.totalEligible.coerceAtLeast(0)
+    val presentCount = attendanceSummary.presentEligible.coerceIn(0, totalEligible)
+    val absentCount = (totalEligible - presentCount).coerceAtLeast(0)
+
+    val presentValue = if (totalEligible > 0) {
+        val percent = (presentCount * 100) / totalEligible
+        "$presentCount ($percent%)"
+    } else {
+        "0 (0%)"
+    }
+
+    val absentValue = if (totalEligible > 0) {
+        val percent = (absentCount * 100) / totalEligible
+        "$absentCount ($percent%)"
+    } else {
+        "0 (0%)"
+    }
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -163,7 +194,7 @@ private fun DashboardContent(
         }
         item {
             Text(
-                text = "Attendance Summary",
+                text = "📊 Attendance Summary",
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -175,16 +206,17 @@ private fun DashboardContent(
             ) {
 
                 DashboardCardLike(
-                    title = "Present and i want hte percantage to e.g 5 present 6%",
-                    value = attendanceSummary.presentEligible.toString(),
+                    title = "✅ Present",
+                    value = presentValue,
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
                 DashboardCardLike(
-                    title = "Absent and i want hte percantage to e.g 5 absent 6%\"",
-                    value = (attendanceSummary.totalEligible - attendanceSummary.presentEligible)
-                        .coerceAtLeast(0)
-                        .toString(),
+                    title = "❌ Absent",
+//                    value = (attendanceSummary.totalEligible - attendanceSummary.presentEligible)
+//                        .coerceAtLeast(0)
+//                        .toString(),
+                    value = absentValue,
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
@@ -197,19 +229,18 @@ private fun DashboardContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 DashboardCardLike(
-                    title = "total of children ",
-                    value = "",
+                    title = "👧 Eligible Children",
+//                    value = attendanceSummary.totalEligible.toString(),
+                    value = totalEligible.toString(),
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
                 DashboardCardLike(
-                    title = "Scope",
+                    title = "🌍 Scope",
                     value = "This event only",
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
-
-
             }
         }
 
@@ -227,14 +258,14 @@ private fun DashboardContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 DashboardCardLike(
-                    title = "Edit Event",
+                    title = "✏️ Edit Event",
                     modifier = Modifier.weight(1f)
                 ) {
                     onEditEvent(event.eventId)
                 }
 
                 DashboardCardLike(
-                    title = "Attendance",
+                    title = "✅ Attendance",
                     modifier = Modifier.weight(1f)
                 ) {
                     onOpenAttendance(event.eventId)
@@ -245,27 +276,28 @@ private fun DashboardContent(
         if (!event.isChild) {
             item {
                 DashboardCardLike(
-                    title = "Add Child Event",
+                    title = "➕ Add Child Event",
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     onAddChildEvent(event.eventId)
                 }
             }
         }
+
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 DashboardCardLike(
-                    title = "Child Events",
+                    title = "📅 Child Events",
                     value = childCount.toString(),
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
 
                 DashboardCardLike(
-                    title = "Type",
+                    title = "🏷️ Type",
                     value = if (event.isChild) "Child Event" else "Parent Event",
                     modifier = Modifier.weight(1f),
                     enabled = false
@@ -279,14 +311,14 @@ private fun DashboardContent(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 DashboardCardLike(
-                    title = "Location",
+                    title = "📍 Location",
                     value = event.location.ifBlank { "-" },
                     modifier = Modifier.weight(1f),
                     enabled = false
                 ) {}
 
                 DashboardCardLike(
-                    title = "Parent Event ID",
+                    title = "🧬 Parent Event ID",
                     value = event.eventParentId.ifBlank { "-" },
                     modifier = Modifier.weight(1f),
                     enabled = false
@@ -294,15 +326,25 @@ private fun DashboardContent(
             }
         }
 
-
         item {
             Text(
-                text = "Child Events",
+                text = "🧒 Child Events",
                 style = MaterialTheme.typography.titleMedium
             )
         }
 
-        if (childEvents.isEmpty()) {
+
+
+        if (!childEventsLoaded) {
+            item {
+                Button(
+                    onClick = onLoadChildEvents,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(if (childEventsLoading) "Loading Child Events..." else "View Child Events")
+                }
+            }
+        } else if (childEvents.isEmpty()) {
             item {
                 Text(
                     text = "No child events linked yet.",
@@ -322,15 +364,30 @@ private fun DashboardContent(
         item {
             Text(
                 text = if (event.isChild) {
-                    "Frequent Attendees (This Event)"
+                    "⭐ Frequent Attendees (This Event)"
                 } else {
-                    "Frequent Attendees (Parent + Children)"
+                    "⭐ Frequent Attendees (Parent + Children)"
                 },
                 style = MaterialTheme.typography.titleMedium
             )
         }
 
-        if (frequentAttendees.isEmpty()) {
+        if (!frequentAttendeesLoaded) {
+            item {
+                Button(
+                    onClick = onLoadFrequentAttendees,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (frequentAttendeesLoading) {
+                            "Loading Frequent Children..."
+                        } else {
+                            "View Frequent Children"
+                        }
+                    )
+                }
+            }
+        } else if (frequentAttendees.isEmpty()) {
             item {
                 Text(
                     text = "No frequent attendees yet.",
@@ -344,7 +401,6 @@ private fun DashboardContent(
                     row = row,
                     onClick = { onOpenFrequentAttendee(row.childId) }
                 )
-
             }
         }
     }
