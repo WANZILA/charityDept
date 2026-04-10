@@ -98,7 +98,7 @@ fun AttendanceRosterScreen(
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
+                    .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 6.dp)
             ) {
                 Column(Modifier.padding(12.dp)) {
                     Text(
@@ -267,7 +267,8 @@ private fun AttendanceRow(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            )
+            {
                 ProfileAvatar(
                     profileImageLocalPath = rosterChild.child.profileImageLocalPath,
                     profileImg = "",
@@ -275,22 +276,24 @@ private fun AttendanceRow(
                 )
 
                 Column(modifier = Modifier.weight(1f)) {
+                    val fullName = listOf(
+                        rosterChild.child.fName.trim(),
+                        rosterChild.child.lName.trim()
+                    ).filter { it.isNotBlank() }.joinToString(" ")
+
                     Text(
-                        text = rosterChild.child.fName.trim(),
+                        text = fullName.ifBlank { "Unnamed Child" },
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text = rosterChild.child.lName.trim(),
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+
                     val line2 = buildString {
-                        if (rosterChild.child.street.isNotBlank())
+                        if (rosterChild.child.street.isNotBlank()) {
                             append("Street: ${rosterChild.child.street}")
+                        }
                     }
+
                     if (line2.isNotBlank()) {
                         Text(
                             text = line2,
@@ -301,7 +304,6 @@ private fun AttendanceRow(
                         )
                     }
                 }
-
                 FilledTonalButton(
                     onClick = {
                         if (!hideToggle) {

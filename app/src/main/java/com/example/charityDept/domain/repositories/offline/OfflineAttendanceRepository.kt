@@ -251,29 +251,27 @@ class OfflineAttendanceRepositoryImpl @Inject constructor(
         eventId: String,
         eventDate: Timestamp
     ): EligibleCounts {
-        val cutoffMs = endOfDayMillis(eventDate)
-        val total = dao.countTotalEligibleByCutoff(cutoffMs)
+        val cutoffNanos = endOfDayNanos(eventDate)
+        val total = dao.countTotalEligibleByCutoff(cutoffNanos)
 
-        // If you persist enums as String via TypeConverter, this is fine:
         val presentStatus = AttendanceStatus.PRESENT.name
-        // If you persist as Int ordinal -> use AttendanceStatus.PRESENT.ordinal
 
         val present = dao.countPresentEligibleForEvent(
             eventId = eventId,
             presentStatus = presentStatus,
-            cutoffMs = cutoffMs
+            cutoffNanos = cutoffNanos
         )
         return EligibleCounts(totalEligible = total, presentEligible = present)
     }
 
-    private fun endOfDayMillis(ts: Timestamp): Long {
+    private fun endOfDayNanos(ts: Timestamp): Long {
         val cal = Calendar.getInstance()
         cal.time = ts.toDate()
-        cal.set(Calendar.HOUR_OF_DAY, 23) // ← fix here
+        cal.set(Calendar.HOUR_OF_DAY, 23)
         cal.set(Calendar.MINUTE, 59)
         cal.set(Calendar.SECOND, 59)
         cal.set(Calendar.MILLISECOND, 999)
-        return cal.timeInMillis
+        return cal.timeInMillis * 1_000_000L
     }
 
 }

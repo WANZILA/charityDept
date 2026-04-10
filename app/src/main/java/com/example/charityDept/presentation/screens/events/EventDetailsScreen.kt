@@ -168,8 +168,8 @@ private fun DetailsContent(
                 Field("Location", event.location.ifBlank { "-" })
                 Field("Team Name", event.teamName)     // Timestamp ✅
                 Field("Team Leader", event.teamLeaderNames)
-                Field("Tel", event.leaderTelephone1.ifBlank { "-" })
-                Field("Tel", event.leaderTelephone2.ifBlank { "-" })
+                Field("Telephone 1", event.leaderTelephone1.ifBlank { "-" })
+                Field("Telephone 2", event.leaderTelephone2.ifBlank { "-" })
                 Field("Notes", event.notes.ifBlank { "-" })
             }
         }

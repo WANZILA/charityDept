@@ -27,9 +27,16 @@ import com.example.charityDept.core.sync.event.EventSyncScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 
+//data class EventListUiState(
+//    val loading: Boolean = true,
+//    val event: List<Event> = emptyList(),
+//    val isOffline: Boolean = false,
+//    val isSyncing: Boolean = false,
+//    val error: String? = null
+//)
+
 data class EventListUiState(
-    val loading: Boolean = true,
-    val event: List<Event> = emptyList(),
+    val loading: Boolean = false,
     val isOffline: Boolean = false,
     val isSyncing: Boolean = false,
     val error: String? = null
@@ -48,15 +55,8 @@ class EventListViewModel @Inject constructor(
     val pagedEvents: Flow<PagingData<Event>> =
         repo.pagedActive().cachedIn(viewModelScope)
 
-    private val _query = MutableStateFlow("")
-    fun onSearchQueryChange(q: String) { _query.value = q }
-
-    private var latestSnap: EventSnapshot =
-        EventSnapshot(emptyList(), fromCache = true, hasPendingWrites = false)
-
     init {
         observeStream()
-        observeQuery()
     }
 
     private fun observeStream(limit: Long = 300) {
@@ -64,45 +64,19 @@ class EventListViewModel @Inject constructor(
             repo.streamEvents()
                 .catch { e ->
                     Log.e(TAG, "stream error", e)
-                    _ui.value = _ui.value.copy(loading = false, error = e.message)
+                    _ui.value = _ui.value.copy(error = e.message)
                 }
                 .collect { snap ->
-                    latestSnap = snap
-                    pushFiltered()
+                    _ui.value = EventListUiState(
+                        loading = false,
+                        isOffline = snap.fromCache,
+                        isSyncing = snap.hasPendingWrites,
+                        error = null
+                    )
                 }
         }
     }
 
-    private fun observeQuery() {
-        viewModelScope.launch {
-            _query
-                .map { it.trim().lowercase() }
-                .distinctUntilChanged()
-                .collect { pushFiltered() }
-        }
-    }
-
-    private fun pushFiltered() {
-        val q = _query.value.trim().lowercase()
-        val filtered = if (q.isEmpty()) {
-            latestSnap.events
-        } else {
-            latestSnap.events.filter { e ->
-                e.title.trim().lowercase().contains(q)
-            }
-        }
-        val sorted = filtered.sortedWith { a, b ->
-            val s = b.eventDate.seconds.compareTo(a.eventDate.seconds)
-            if (s != 0) s else b.eventDate.nanoseconds.compareTo(a.eventDate.nanoseconds)
-        }
-        _ui.value = EventListUiState(
-            loading = false,
-            event = sorted,
-            isOffline = latestSnap.fromCache,
-            isSyncing = latestSnap.hasPendingWrites,
-            error = null
-        )
-    }
 
     fun refresh() {
         EventSyncScheduler.enqueuePullNow(appContext)

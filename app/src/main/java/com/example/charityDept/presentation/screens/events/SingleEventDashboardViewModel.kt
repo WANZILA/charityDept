@@ -16,6 +16,7 @@ import javax.inject.Inject
 import com.example.charityDept.data.local.projection.EventFrequentAttendeeRow
 import com.example.charityDept.domain.repositories.offline.OfflineAttendanceRepository
 import com.example.charityDept.domain.repositories.offline.EligibleCounts
+import kotlinx.coroutines.Dispatchers
 
 data class SingleEventDashboardUiState(
     val loading: Boolean = true,
@@ -57,8 +58,9 @@ class SingleEventDashboardViewModel @Inject constructor(
 
             combine(
                 eventsRepo.observeEventById(eventId),
-                eventsRepo.observeChildCountForParent(eventId)
-            ) { event, childCount ->
+                eventsRepo.observeChildCountForParent(eventId),
+                attendanceRepo.streamAttendanceForEvent(eventId)
+            ) { event, childCount, _ ->
                 event to childCount
             }.collectLatest { (event, childCount) ->
                 if (event == null) {
@@ -75,6 +77,14 @@ class SingleEventDashboardViewModel @Inject constructor(
                         error = "Event not found"
                     )
                 } else {
+                    viewModelScope.launch(Dispatchers.IO) {
+                        runCatching {
+                            if (attendanceRepo.getAttendanceOnce(event.eventId).isEmpty()) {
+                                attendanceRepo.hydrateEvent(event.eventId)
+                            }
+                        }
+                    }
+
                     val summary = attendanceRepo.eligibleCountsForEvent(
                         eventId = event.eventId,
                         eventDate = event.eventDate

@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowCircleLeft
 import androidx.compose.material.icons.outlined.Add
@@ -43,6 +44,9 @@ import java.util.Locale
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import androidx.paging.LoadState
+import com.example.charityDept.presentation.screens.widgets.PendingSyncLabel
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +65,14 @@ fun EventListScreen(
 
     // /// CHANGED: Collect paging items
     val pagingItems = vm.pagedEvents.collectAsLazyPagingItems()
+
+    val allLoadedEvents = (0 until pagingItems.itemCount)
+        .mapNotNull { index -> pagingItems[index] }
+
+    val visibleEvents = allLoadedEvents.filter { event ->
+        search.isBlank() || event.title.contains(search, ignoreCase = true)
+    }
+
 
     LaunchedEffect(ui.error) {
         ui.error?.let { Log.d("EventListScreen", "Error: $it") }
@@ -110,7 +122,6 @@ fun EventListScreen(
                 value = search,
                 onValueChange = {
                     search = it
-                    vm.onSearchQueryChange(it) // still powers snapshot filter for chips/instant list
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -125,6 +136,17 @@ fun EventListScreen(
                 )
             )
 
+            Text(
+                text = if (search.isBlank()) {
+                    "${allLoadedEvents.size} event${if (allLoadedEvents.size == 1) "" else "s"}"
+                } else {
+                    "${visibleEvents.size} of ${allLoadedEvents.size} event${if (allLoadedEvents.size == 1) "" else "s"}"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            )
+
             // /// CHANGED: Paging-driven content
             Box(Modifier.fillMaxSize()) {
                 when (val state = pagingItems.loadState.refresh) {
@@ -135,8 +157,10 @@ fun EventListScreen(
                         modifier = Modifier.align(Alignment.Center)
                     )
                     is LoadState.NotLoading -> {
-                        if (pagingItems.itemCount == 0) {
+                        if (allLoadedEvents.isEmpty()) {
                             Text("No events yet", modifier = Modifier.align(Alignment.Center))
+                        } else if (visibleEvents.isEmpty()) {
+                            Text("No events match your search", modifier = Modifier.align(Alignment.Center))
                         } else {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
@@ -144,20 +168,19 @@ fun EventListScreen(
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 items(
-                                    count = pagingItems.itemCount,
-                                    key = pagingItems.itemKey { it.eventId }
-                                ) { index ->
-                                    val event = pagingItems[index]
-                                    if (event != null) {
-                                        EventRow(event = event) { onEventClick(event.eventId) }
-                                    }
+                                    items = visibleEvents,
+                                    key = { it.eventId }
+                                ) { event ->
+                                    EventRow(event = event) { onEventClick(event.eventId) }
                                 }
-                                // /// CHANGED: Append load state footer
+
                                 item {
                                     when (val ap = pagingItems.loadState.append) {
                                         is LoadState.Loading -> {
                                             Row(
-                                                Modifier.fillMaxWidth().padding(16.dp),
+                                                Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
                                                 horizontalArrangement = Arrangement.Center
                                             ) { CircularProgressIndicator() }
                                         }
@@ -193,22 +216,82 @@ private fun EventRow(
             .clickable { onClick() }
     ) {
         Column(Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = event.title.ifBlank { "Untitled Event" },
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Text(
+                        text = if (event.isChild) "Child Event" else "Parent Event",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                AssistChip(
+                    onClick = {},
+                    enabled = false,
+                    label = {
+                        Text(
+                            text = event.eventStatus.name,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+
+            if (!event.isDirty) {
+                Spacer(Modifier.height(8.dp))
+                PendingSyncLabel(isDirty = event.isDirty)
+            }
+
+            Spacer(Modifier.height(8.dp))
+
             Text(
-                text = event.title.ifBlank { "Untitled Event" },
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Date: ${event.eventDate.asHuman()}",
+                text = "📅 ${event.eventDate.asHuman()}",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            if (event.location.isNotBlank()) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "📍 ${event.location}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            if (event.notes.isNotBlank()) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = event.notes,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }
-
 /* ---------- Timestamp formatting (timestamps all through) ---------- */
 
 private val humanFmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())

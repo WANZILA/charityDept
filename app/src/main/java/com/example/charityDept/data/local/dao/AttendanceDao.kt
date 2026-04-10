@@ -114,29 +114,47 @@ interface AttendanceDao {
 
 
     /** Total non-graduated children registered on/before cutoffMs. */
+    /** Total non-graduated children registered on/before cutoffNanos. */
     @Query("""
-        SELECT COUNT(*) 
+        SELECT COUNT(*)
         FROM children c
-        WHERE COALESCE(c.graduated, 'NO') = 'NO'
-          AND (c.createdAt IS NULL OR c.createdAt <= :cutoffMs)
+        WHERE c.isDeleted = 0
+          AND c.graduated = 0
+          AND (c.createdAt IS NULL OR c.createdAt <= :cutoffNanos)
     """)
-    suspend fun countTotalEligibleByCutoff(cutoffMs: Long): Int
-
+    suspend fun countTotalEligibleByCutoff(cutoffNanos: Long): Int
     /** selects the count of the children based on the eventDate **/
     /** Present count for an event among eligible (non-grad, registered on/before cutoffMs). */
+//    @Query("""
+//        SELECT COUNT(DISTINCT a.childId)
+//        FROM attendances a
+//        JOIN children c ON c.childId = a.childId
+//        WHERE a.eventId = :eventId
+//          AND a.status = :presentStatus
+//          AND COALESCE(c.graduated, 'NO') = 'NO'
+//          AND (c.createdAt IS NULL OR c.createdAt <= :cutoffMs)
+//    """)
+//    suspend fun countPresentEligibleForEvent(
+//        eventId: String,
+//        presentStatus: String,   // e.g., "PRESENT" if you store enum name
+//        cutoffMs: Long
+//    ): Int
+
+    /** Present count for an event among eligible (non-grad, registered on/before cutoffNanos). */
     @Query("""
-        SELECT COUNT(DISTINCT a.childId)
+        SELECT COUNT(*)
         FROM attendances a
-        JOIN children c ON c.childId = a.childId
+        INNER JOIN children c ON c.childId = a.childId
         WHERE a.eventId = :eventId
           AND a.status = :presentStatus
-          AND COALESCE(c.graduated, 'NO') = 'NO'
-          AND (c.createdAt IS NULL OR c.createdAt <= :cutoffMs)
+          AND c.isDeleted = 0
+          AND c.graduated = 0
+          AND (c.createdAt IS NULL OR c.createdAt <= :cutoffNanos)
     """)
     suspend fun countPresentEligibleForEvent(
         eventId: String,
-        presentStatus: String,   // e.g., "PRESENT" if you store enum name
-        cutoffMs: Long
+        presentStatus: String,
+        cutoffNanos: Long
     ): Int
 
     // --- Optional quick diagnostics (handy while verifying) ---
