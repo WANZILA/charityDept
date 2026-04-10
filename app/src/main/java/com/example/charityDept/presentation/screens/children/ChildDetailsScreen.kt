@@ -191,9 +191,13 @@ private fun DetailsContent(child: Child) {
 
         item {
             CollapsibleSection("Education Info", openEducation, { openEducation = !openEducation }) {
+                Field("Education level", child.educationLevel.name)
                 Field("Last class", child.lastClass.ifBlank { "-" })
                 Field("Previous school", child.previousSchool.ifBlank { "-" })
                 Field("Reason left school", child.reasonLeftSchool.ifBlank { "-" })
+                Field("Former sponsor", child.formerSponsor.name)
+                Field("Former sponsor (Other)", child.formerSponsorOther.ifBlank { "-" })
+                Field("Technical skills", child.technicalSkills.ifBlank { "-" })
             }
         }
 
@@ -203,6 +207,7 @@ private fun DetailsContent(child: Child) {
                 Field("Resettlement preference (Other)", child.resettlementPreferenceOther.ifBlank { "-" })
                 Field("Resettled", if (child.resettled) "Yes" else "No")
                 Field("Resettlement date", child.resettlementDate?.asHuman() ?: "-")
+                Field("Country", child.country.name)
                 Field("Region", child.region.ifBlank { "-" })
                 Field("District", child.district.ifBlank { "-" })
                 Field("County", child.county.ifBlank { "-" })
@@ -215,16 +220,64 @@ private fun DetailsContent(child: Child) {
         item {
             CollapsibleSection("Family Members", openMembers, { openMembers = !openMembers }) {
                 MemberBlock(1, child.memberFName1, child.memberLName1, child.relationship1.name, child.telephone1a, child.telephone1b)
+                Field("Member 1 ancestral country", child.member1AncestralCountry.name)
+                Field("Member 1 ancestral region", child.member1AncestralRegion.ifBlank { "-" })
+                Field("Member 1 ancestral district", child.member1AncestralDistrict.ifBlank { "-" })
+                Field("Member 1 ancestral county", child.member1AncestralCounty.ifBlank { "-" })
+                Field("Member 1 ancestral sub-county", child.member1AncestralSubCounty.ifBlank { "-" })
+                Field("Member 1 ancestral parish", child.member1AncestralParish.ifBlank { "-" })
+                Field("Member 1 ancestral village", child.member1AncestralVillage.ifBlank { "-" })
+                Field("Member 1 rental country", child.member1RentalCountry.name)
+                Field("Member 1 rental region", child.member1RentalRegion.ifBlank { "-" })
+                Field("Member 1 rental district", child.member1RentalDistrict.ifBlank { "-" })
+                Field("Member 1 rental county", child.member1RentalCounty.ifBlank { "-" })
+                Field("Member 1 rental sub-county", child.member1RentalSubCounty.ifBlank { "-" })
+                Field("Member 1 rental parish", child.member1RentalParish.ifBlank { "-" })
+                Field("Member 1 rental village", child.member1RentalVillage.ifBlank { "-" })
+
                 Divider()
+
                 MemberBlock(2, child.memberFName2, child.memberLName2, child.relationship2.name, child.telephone2a, child.telephone2b)
+                Field("Member 2 ancestral country", child.member2AncestralCountry.name)
+                Field("Member 2 ancestral region", child.member2AncestralRegion.ifBlank { "-" })
+                Field("Member 2 ancestral district", child.member2AncestralDistrict.ifBlank { "-" })
+                Field("Member 2 ancestral county", child.member2AncestralCounty.ifBlank { "-" })
+                Field("Member 2 ancestral sub-county", child.member2AncestralSubCounty.ifBlank { "-" })
+                Field("Member 2 ancestral parish", child.member2AncestralParish.ifBlank { "-" })
+                Field("Member 2 ancestral village", child.member2AncestralVillage.ifBlank { "-" })
+                Field("Member 2 rental country", child.member2RentalCountry.name)
+                Field("Member 2 rental region", child.member2RentalRegion.ifBlank { "-" })
+                Field("Member 2 rental district", child.member2RentalDistrict.ifBlank { "-" })
+                Field("Member 2 rental county", child.member2RentalCounty.ifBlank { "-" })
+                Field("Member 2 rental sub-county", child.member2RentalSubCounty.ifBlank { "-" })
+                Field("Member 2 rental parish", child.member2RentalParish.ifBlank { "-" })
+                Field("Member 2 rental village", child.member2RentalVillage.ifBlank { "-" })
+
                 Divider()
+
                 MemberBlock(3, child.memberFName3, child.memberLName3, child.relationship3.name, child.telephone3a, child.telephone3b)
+                Field("Member 3 ancestral country", child.member3AncestralCountry.name)
+                Field("Member 3 ancestral region", child.member3AncestralRegion.ifBlank { "-" })
+                Field("Member 3 ancestral district", child.member3AncestralDistrict.ifBlank { "-" })
+                Field("Member 3 ancestral county", child.member3AncestralCounty.ifBlank { "-" })
+                Field("Member 3 ancestral sub-county", child.member3AncestralSubCounty.ifBlank { "-" })
+                Field("Member 3 ancestral parish", child.member3AncestralParish.ifBlank { "-" })
+                Field("Member 3 ancestral village", child.member3AncestralVillage.ifBlank { "-" })
+                Field("Member 3 rental country", child.member3RentalCountry.name)
+                Field("Member 3 rental region", child.member3RentalRegion.ifBlank { "-" })
+                Field("Member 3 rental district", child.member3RentalDistrict.ifBlank { "-" })
+                Field("Member 3 rental county", child.member3RentalCounty.ifBlank { "-" })
+                Field("Member 3 rental sub-county", child.member3RentalSubCounty.ifBlank { "-" })
+                Field("Member 3 rental parish", child.member3RentalParish.ifBlank { "-" })
+                Field("Member 3 rental village", child.member3RentalVillage.ifBlank { "-" })
             }
         }
 
         item {
             CollapsibleSection("Spiritual Info", openSpiritual, { openSpiritual = !openSpiritual }) {
                 Field("Accepted Jesus", child.acceptedJesus.name)
+                Field("Confessed by", child.confessedBy.name)
+                Field("Ministry name", child.ministryName.ifBlank { "-" })
                 Field("Accepted Jesus date", child.acceptedJesusDate?.asHuman() ?: "-")
                 Field("Who prayed", child.whoPrayed.name)
                 Field("Who prayed (Other)", child.whoPrayedOther.ifBlank { "-" })

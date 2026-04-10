@@ -493,6 +493,29 @@ fun Child.toFirestoreMapPatch(): Map<String, Any> = buildMap {
     putIfNotBlank("telephone2a", telephone2a)
     putIfNotBlank("telephone2b", telephone2b)
 
+    // ===== Family Members 2 =====
+    putIfNotBlank("memberFName2", memberFName2)
+    putIfNotBlank("memberLName2", memberLName2)
+    put("relationship2", relationship2.name)
+    putIfNotBlank("telephone2a", telephone2a)
+    putIfNotBlank("telephone2b", telephone2b)
+
+    put("member2AncestralCountry", member2AncestralCountry.name)
+    putIfNotBlank("member2AncestralRegion", member2AncestralRegion)
+    putIfNotBlank("member2AncestralDistrict", member2AncestralDistrict)
+    putIfNotBlank("member2AncestralCounty", member2AncestralCounty)
+    putIfNotBlank("member2AncestralSubCounty", member2AncestralSubCounty)
+    putIfNotBlank("member2AncestralParish", member2AncestralParish)
+    putIfNotBlank("member2AncestralVillage", member2AncestralVillage)
+
+    put("member2RentalCountry", member2RentalCountry.name)
+    putIfNotBlank("member2RentalRegion", member2RentalRegion)
+    putIfNotBlank("member2RentalDistrict", member2RentalDistrict)
+    putIfNotBlank("member2RentalCounty", member2RentalCounty)
+    putIfNotBlank("member2RentalSubCounty", member2RentalSubCounty)
+    putIfNotBlank("member2RentalParish", member2RentalParish)
+    putIfNotBlank("member2RentalVillage", member2RentalVillage)
+
     put("member3AncestralCountry", member3AncestralCountry.name)
     putIfNotBlank("member3AncestralRegion", member3AncestralRegion)
     putIfNotBlank("member3AncestralDistrict", member3AncestralDistrict)
