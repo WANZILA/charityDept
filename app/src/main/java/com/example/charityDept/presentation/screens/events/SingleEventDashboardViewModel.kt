@@ -14,8 +14,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import com.example.charityDept.data.local.projection.EventFrequentAttendeeRow
+import com.example.charityDept.data.model.AttendanceStatus
 import com.example.charityDept.domain.repositories.offline.OfflineAttendanceRepository
 import com.example.charityDept.domain.repositories.offline.EligibleCounts
+import com.example.charityDept.domain.repositories.offline.OfflineChildrenRepository
 import kotlinx.coroutines.Dispatchers
 
 data class SingleEventDashboardUiState(
@@ -35,10 +37,18 @@ data class SingleEventDashboardUiState(
     val error: String? = null
 )
 
+private data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)
+
 @HiltViewModel
 class SingleEventDashboardViewModel @Inject constructor(
     private val eventsRepo: OfflineEventsRepository,
-    private val attendanceRepo: OfflineAttendanceRepository
+    private val attendanceRepo: OfflineAttendanceRepository,
+    private val childrenRepo: OfflineChildrenRepository
 ) : ViewModel() {
 
     private val _ui = MutableStateFlow(SingleEventDashboardUiState())
@@ -59,10 +69,11 @@ class SingleEventDashboardViewModel @Inject constructor(
             combine(
                 eventsRepo.observeEventById(eventId),
                 eventsRepo.observeChildCountForParent(eventId),
+                childrenRepo.streamAllNotGraduated(),
                 attendanceRepo.streamAttendanceForEvent(eventId)
-            ) { event, childCount, _ ->
-                event to childCount
-            }.collectLatest { (event, childCount) ->
+            ) { event, childCount, childrenSnap, attendanceSnap ->
+                Quadruple(event, childCount, childrenSnap, attendanceSnap)
+            }.collectLatest { (event, childCount, childrenSnap, attendanceSnap) ->
                 if (event == null) {
                     _ui.value = SingleEventDashboardUiState(
                         loading = false,
@@ -85,22 +96,29 @@ class SingleEventDashboardViewModel @Inject constructor(
                         }
                     }
 
-                    val summary = attendanceRepo.eligibleCountsForEvent(
-                        eventId = event.eventId,
-                        eventDate = event.eventDate
-                    )
+                    val attMap = attendanceSnap.attendance.associateBy { it.childId }
+                    val merged = childrenSnap.children.map { child ->
+                        attMap[child.childId]
+                    }
+
+                    val total = merged.size
+                    val present = merged.count { it?.status == AttendanceStatus.PRESENT }
 
                     _ui.value = _ui.value.copy(
                         loading = false,
                         event = event,
                         childCount = childCount,
-                        attendanceSummary = summary,
+                        attendanceSummary = EligibleCounts(
+                            totalEligible = total,
+                            presentEligible = present
+                        ),
                         error = null
                     )
                 }
             }
         }
     }
+
 
     fun loadChildEvents(eventId: String) {
         if (_ui.value.childEventsLoaded || _ui.value.childEventsLoading) return
